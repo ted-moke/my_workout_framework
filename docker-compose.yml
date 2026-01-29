@@ -1,15 +1,40 @@
 version: "3.8"
+
 services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: workout
-      POSTGRES_PASSWORD: workout
-      POSTGRES_DB: workout_tracker
+      POSTGRES_USER: ${DB_USER:-workout}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-workout}
+      POSTGRES_DB: ${DB_NAME:-workout_tracker}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-workout} -d ${DB_NAME:-workout_tracker}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-3001}:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-workout}
+      - DB_PASSWORD=${DB_PASSWORD:-workout}
+      - DB_NAME=${DB_NAME:-workout_tracker}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   pgdata:
