@@ -7,8 +7,6 @@ services:
       POSTGRES_USER: ${DB_USER:-workout}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-workout}
       POSTGRES_DB: ${DB_NAME:-workout_tracker}
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -22,7 +20,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "${PORT:-3001}:3001"
+      - "7000:3001"
     environment:
       - NODE_ENV=production
       - PORT=3001
@@ -34,6 +32,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    depends_on:
+      - app
     restart: unless-stopped
 
 volumes:
