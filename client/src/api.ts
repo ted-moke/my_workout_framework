@@ -1,10 +1,17 @@
-import type { StatusResponse, WorkoutLog } from "./types";
+import type { StatusResponse, WorkoutLog, DayOption } from "./types";
 
 const BASE = "/api";
 
-export async function fetchStatus(): Promise<StatusResponse> {
-  const res = await fetch(`${BASE}/status`);
+export async function fetchStatus(dayNumber?: number): Promise<StatusResponse> {
+  const url = dayNumber ? `${BASE}/status?dayNumber=${dayNumber}` : `${BASE}/status`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch status");
+  return res.json();
+}
+
+export async function fetchDays(): Promise<DayOption[]> {
+  const res = await fetch(`${BASE}/days`);
+  if (!res.ok) throw new Error("Failed to fetch days");
   return res.json();
 }
 
@@ -14,11 +21,13 @@ export async function fetchHistory(): Promise<WorkoutLog[]> {
   return res.json();
 }
 
-export async function startWorkout(dayId: number): Promise<{ id: number; started_at: string }> {
+export async function startWorkout(dayId: number, workoutDate?: string): Promise<{ id: number; started_at: string }> {
+  const body: { dayId: number; workoutDate?: string } = { dayId };
+  if (workoutDate) body.workoutDate = workoutDate;
   const res = await fetch(`${BASE}/workouts/start`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dayId }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error("Failed to start workout");
   return res.json();

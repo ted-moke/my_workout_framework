@@ -46,7 +46,15 @@ export interface StatusResponse {
 export interface WorkoutLog {
   id: number;
   completed_at: string;
+  workout_date: string | null;
   day_number: number;
   focus_areas: FocusArea[];
   exercises: { id: number; name: string; focus_area: string }[];
+}
+
+export interface DayOption {
+  day_id: number;
+  day_number: number;
+  optional: boolean;
+  focus_areas: FocusArea[];
 }

@@ -37,6 +37,7 @@ services:
   tunnel:
     image: cloudflare/cloudflared:latest
     command: tunnel --no-autoupdate run
+    network_mode: service:app
     environment:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
     depends_on:

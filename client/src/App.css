@@ -344,3 +344,103 @@ body {
   color: #666;
   font-size: 0.9rem;
 }
+
+/* Day selector */
+.day-selector {
+  margin-bottom: 1rem;
+}
+
+.selector-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.375rem;
+}
+
+.day-buttons {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.day-btn {
+  flex: 1;
+  min-width: 0;
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.25rem;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.day-btn:hover {
+  border-color: #555;
+  background: #282828;
+}
+
+.day-btn.active {
+  border-color: #2563eb;
+  background: #1e293b;
+}
+
+.day-btn.suggested:not(.active) {
+  border-color: #334155;
+}
+
+.day-btn-number {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.day-btn-focus {
+  display: block;
+  font-size: 0.65rem;
+  color: #888;
+  margin-top: 0.125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.day-btn.active .day-btn-focus {
+  color: #60a5fa;
+}
+
+/* Date picker */
+.date-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.date-picker-row .selector-label {
+  margin-bottom: 0;
+  min-width: 2.5rem;
+}
+
+.date-input {
+  background: #222;
+  color: #e0e0e0;
+  border: 1px solid #333;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.85rem;
+  font-family: inherit;
+  flex: 1;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+}

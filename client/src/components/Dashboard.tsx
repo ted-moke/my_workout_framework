@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { fetchStatus, startWorkout, toggleExercise, finishWorkout, abortWorkout } from "../api";
-import type { StatusResponse, ExerciseGroup } from "../types";
+import { fetchStatus, fetchDays, startWorkout, toggleExercise, finishWorkout, abortWorkout } from "../api";
+import type { StatusResponse, ExerciseGroup, DayOption } from "../types";
 
 function timeAgo(dateStr: string | null): string {
   if (!dateStr) return "never";
@@ -54,15 +54,24 @@ function ExerciseGroupSection({
   );
 }
 
+function todayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export default function Dashboard({ onWorkoutLogged }: { onWorkoutLogged?: () => void }) {
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [workoutId, setWorkoutId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [days, setDays] = useState<DayOption[]>([]);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [workoutDate, setWorkoutDate] = useState(todayStr());
+  const [autoDayNumber, setAutoDayNumber] = useState<number | null>(null);
 
-  const load = useCallback(() => {
-    fetchStatus()
+  const load = useCallback((dayNumber?: number) => {
+    fetchStatus(dayNumber)
       .then((data) => {
         setStatus(data);
         if (data.activeWorkout) {
@@ -71,20 +80,35 @@ export default function Dashboard({ onWorkoutLogged }: { onWorkoutLogged?: () =>
         } else {
           setWorkoutId(null);
           setSelected(new Set());
+          // Set auto-calculated day only on initial load
+          if (!dayNumber) {
+            setAutoDayNumber(data.nextDay.day_number);
+            setSelectedDay(data.nextDay.day_number);
+          }
         }
       })
       .catch(() => setError("Failed to load status"));
   }, []);
 
-  useEffect(load, [load]);
+  useEffect(() => {
+    load();
+    fetchDays()
+      .then(setDays)
+      .catch(() => {});
+  }, [load]);
 
   const isActive = workoutId !== null;
+
+  const handleDaySelect = (dayNumber: number) => {
+    setSelectedDay(dayNumber);
+    load(dayNumber);
+  };
 
   const handleStart = async () => {
     if (!status) return;
     setBusy(true);
     try {
-      const result = await startWorkout(status.nextDay.day_id);
+      const result = await startWorkout(status.nextDay.day_id, workoutDate);
       setWorkoutId(result.id);
       setSelected(new Set());
     } catch {
@@ -123,6 +147,9 @@ export default function Dashboard({ onWorkoutLogged }: { onWorkoutLogged?: () =>
     try {
       await finishWorkout(workoutId);
       onWorkoutLogged?.();
+      setSelectedDay(null);
+      setAutoDayNumber(null);
+      setWorkoutDate(todayStr());
       load();
     } catch {
       setError("Failed to finish workout");
@@ -137,6 +164,9 @@ export default function Dashboard({ onWorkoutLogged }: { onWorkoutLogged?: () =>
     setBusy(true);
     try {
       await abortWorkout(workoutId);
+      setSelectedDay(null);
+      setAutoDayNumber(null);
+      setWorkoutDate(todayStr());
       load();
     } catch {
       setError("Failed to abort workout");
@@ -181,6 +211,38 @@ export default function Dashboard({ onWorkoutLogged }: { onWorkoutLogged?: () =>
             />
           ))}
         </div>
+
+        {!isActive && days.length > 0 && (
+          <div className="day-selector">
+            <label className="selector-label">Day</label>
+            <div className="day-buttons">
+              {days.map((d) => (
+                <button
+                  key={d.day_number}
+                  className={`day-btn${selectedDay === d.day_number ? " active" : ""}${autoDayNumber === d.day_number ? " suggested" : ""}`}
+                  onClick={() => handleDaySelect(d.day_number)}
+                >
+                  <span className="day-btn-number">Day {d.day_number}</span>
+                  <span className="day-btn-focus">{d.focus_areas.map((fa) => fa.name).join(", ")}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!isActive && (
+          <div className="date-picker-row">
+            <label className="selector-label" htmlFor="workout-date">Date</label>
+            <input
+              id="workout-date"
+              type="date"
+              className="date-input"
+              value={workoutDate}
+              max={todayStr()}
+              onChange={(e) => setWorkoutDate(e.target.value)}
+            />
+          </div>
+        )}
 
         {!isActive ? (
           <button className="btn-primary" onClick={handleStart} disabled={busy}>

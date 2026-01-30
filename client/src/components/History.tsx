@@ -35,7 +35,9 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                 {log.focus_areas?.map((fa) => fa.name).join(", ")}
               </span>
               <span className="history-date">
-                {new Date(log.completed_at).toLocaleDateString()}
+                {log.workout_date
+                  ? new Date(log.workout_date + "T00:00:00").toLocaleDateString()
+                  : new Date(log.completed_at).toLocaleDateString()}
               </span>
             </div>
             {log.exercises.length > 0 && (

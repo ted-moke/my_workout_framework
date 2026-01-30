@@ -3,8 +3,30 @@ import pool from "./db";
 
 const router = Router();
 
+// GET /api/days — all 5 days with their focus areas
+router.get("/api/days", async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query(`
+      SELECT d.id as day_id, d.day_number, d.optional,
+        json_agg(
+          json_build_object('id', fa.id, 'name', fa.name)
+          ORDER BY dfa.sort_order
+        ) as focus_areas
+      FROM days d
+      JOIN day_focus_areas dfa ON dfa.day_id = d.id
+      JOIN focus_areas fa ON fa.id = dfa.focus_area_id
+      GROUP BY d.id
+      ORDER BY d.day_number
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error in /api/days:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // GET /api/status — next day, suggested exercises, active workout if any
-router.get("/api/status", async (_req: Request, res: Response) => {
+router.get("/api/status", async (req: Request, res: Response) => {
   try {
     // Check for an active (unfinished) workout first
     const activeWorkout = await pool.query(`
@@ -27,8 +49,12 @@ router.get("/api/status", async (_req: Request, res: Response) => {
     `);
 
     let nextDayNumber: number;
+    const queryDayNumber = req.query.dayNumber ? Number(req.query.dayNumber) : null;
+
     if (activeWorkout.rows.length > 0) {
       nextDayNumber = activeWorkout.rows[0].day_number;
+    } else if (queryDayNumber && queryDayNumber >= 1 && queryDayNumber <= 5) {
+      nextDayNumber = queryDayNumber;
     } else if (lastFinished.rows.length === 0) {
       nextDayNumber = 1;
     } else {
@@ -123,7 +149,7 @@ router.get("/api/status", async (_req: Request, res: Response) => {
 
 // POST /api/workouts/start — begin a new workout
 router.post("/api/workouts/start", async (req: Request, res: Response) => {
-  const { dayId } = req.body;
+  const { dayId, workoutDate } = req.body;
   if (!dayId) {
     res.status(400).json({ error: "dayId is required" });
     return;
@@ -139,10 +165,15 @@ router.post("/api/workouts/start", async (req: Request, res: Response) => {
       return;
     }
 
-    const result = await pool.query(
-      `INSERT INTO workout_logs (day_id) VALUES ($1) RETURNING id, started_at`,
-      [dayId]
-    );
+    const result = workoutDate
+      ? await pool.query(
+          `INSERT INTO workout_logs (day_id, workout_date) VALUES ($1, $2) RETURNING id, started_at`,
+          [dayId, workoutDate]
+        )
+      : await pool.query(
+          `INSERT INTO workout_logs (day_id) VALUES ($1) RETURNING id, started_at`,
+          [dayId]
+        );
     res.json(result.rows[0]);
   } catch (err) {
     console.error("Error in POST /api/workouts/start:", err);
@@ -246,7 +277,7 @@ router.post("/api/workouts/:id/abort", async (req: Request, res: Response) => {
 router.get("/api/history", async (_req: Request, res: Response) => {
   try {
     const logs = await pool.query(`
-      SELECT wl.id, wl.completed_at, d.day_number,
+      SELECT wl.id, wl.completed_at, wl.workout_date, d.day_number,
         json_agg(
           json_build_object('id', fa.id, 'name', fa.name)
           ORDER BY dfa.sort_order
@@ -256,7 +287,7 @@ router.get("/api/history", async (_req: Request, res: Response) => {
       LEFT JOIN day_focus_areas dfa ON dfa.day_id = d.id
       LEFT JOIN focus_areas fa ON fa.id = dfa.focus_area_id
       WHERE wl.finished = true
-      GROUP BY wl.id, wl.completed_at, d.day_number
+      GROUP BY wl.id, wl.completed_at, wl.workout_date, d.day_number
       ORDER BY wl.completed_at DESC
       LIMIT 20
     `);

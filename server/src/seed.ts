@@ -46,6 +46,7 @@ async function seed() {
       CREATE TABLE workout_logs (
         id SERIAL PRIMARY KEY,
         day_id INT REFERENCES days(id),
+        workout_date DATE DEFAULT CURRENT_DATE,
         started_at TIMESTAMPTZ DEFAULT NOW(),
         completed_at TIMESTAMPTZ,
         finished BOOLEAN DEFAULT FALSE
