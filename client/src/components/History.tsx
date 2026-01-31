@@ -36,7 +36,7 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
               </span>
               <span className="history-date">
                 {log.workout_date
-                  ? new Date(log.workout_date + "T00:00:00").toLocaleDateString()
+                  ? new Date(log.workout_date.substring(0, 10) + "T00:00:00").toLocaleDateString()
                   : new Date(log.completed_at).toLocaleDateString()}
               </span>
             </div>
