@@ -1,13 +1,14 @@
 import { useState } from "react";
+import Home from "./components/Home";
 import Dashboard from "./components/Dashboard";
 import History from "./components/History";
 import Settings from "./components/Settings";
 import "./App.css";
 
-type Tab = "dashboard" | "history" | "settings";
+type Tab = "home" | "form" | "history" | "settings";
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const [tab, setTab] = useState<Tab>("home");
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleWorkoutLogged = () => {
@@ -20,10 +21,16 @@ export default function App() {
         <h1>Workout Tracker</h1>
         <nav className="tabs">
           <button
-            className={tab === "dashboard" ? "tab active" : "tab"}
-            onClick={() => setTab("dashboard")}
+            className={tab === "home" ? "tab active" : "tab"}
+            onClick={() => setTab("home")}
           >
-            Dashboard
+            Home
+          </button>
+          <button
+            className={tab === "form" ? "tab active" : "tab"}
+            onClick={() => setTab("form")}
+          >
+            Form
           </button>
           <button
             className={tab === "history" ? "tab active" : "tab"}
@@ -40,7 +47,13 @@ export default function App() {
         </nav>
       </header>
       <main>
-        {tab === "dashboard" && <Dashboard onWorkoutLogged={handleWorkoutLogged} />}
+        {tab === "home" && (
+          <Home
+            onStartWorkout={() => setTab("form")}
+            refreshKey={refreshKey}
+          />
+        )}
+        {tab === "form" && <Dashboard onWorkoutLogged={handleWorkoutLogged} />}
         {tab === "history" && <History refreshKey={refreshKey} />}
         {tab === "settings" && <Settings />}
       </main>
