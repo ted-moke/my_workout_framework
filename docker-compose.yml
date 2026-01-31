@@ -7,6 +7,8 @@ services:
       POSTGRES_USER: ${DB_USER:-workout}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-workout}
       POSTGRES_DB: ${DB_NAME:-workout_tracker}
+    ports:
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -33,6 +35,28 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4
+    profiles: [tools]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      echo 'db:5432:*:${DB_USER:-workout}:${DB_PASSWORD:-workout}' > /tmp/pgpassfile &&
+      chmod 600 /tmp/pgpassfile &&
+      exec /entrypoint.sh
+      "
 
   tunnel:
     image: cloudflare/cloudflared:latest

@@ -16,6 +16,8 @@
     "docker:down": "docker-compose down",
     "docker:build": "docker-compose build",
     "docker:logs": "docker-compose logs -f",
-    "docker:seed": "docker-compose exec app node dist/seed.js"
+    "docker:seed": "docker-compose exec app node dist/seed.js",
+    "pgadmin:start": "docker compose --profile tools up pgadmin -d",
+    "pgadmin:stop": "docker compose --profile tools stop pgadmin"
   }
 }
