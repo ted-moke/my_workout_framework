@@ -89,7 +89,9 @@ async function seed() {
         ('Trunk Control'),
         ('Chest'),
         ('Arms'),
-        ('Core Endurance')
+        ('Core Endurance'),
+        ('Wrists'),
+        ('Neck')
       RETURNING id, name
     `);
     const bodyAreaMap = new Map<string, number>(
@@ -103,6 +105,8 @@ async function seed() {
         "Single Leg Romanian Deadlift",
         "Step Ups",
         "Jumps",
+        "Glute Bridge",
+        "Calf Raises"
       ],
       "Trunk Strength": [
         "Med Ball Throw",
@@ -123,6 +127,8 @@ async function seed() {
         "Overhead Tricep Extension",
       ],
       "Core Endurance": ["Plank Hold", "Farmer's Carry", "Suitcase Carry"],
+      "Wrists": ["Wrist flexion", "Wrist Extension", "Wrist Supination", "Wrist Pronation", "Grip holds"],
+      "Neck": ["Neck Flexion", "Neck Extension", "Neck Rotation", "Neck Lateral Flexion"]
     };
 
     const exerciseMap = new Map<string, number>();
@@ -163,16 +169,18 @@ async function seed() {
       type: string;
       days: number;
     }[] = [
-      { area: "Lower Body", pts: 3, type: "effort", days: 7 },
-      { area: "Trunk Strength", pts: 3, type: "effort", days: 7 },
-      { area: "Cardio", pts: 75, type: "active_minutes", days: 4 },
-      { area: "Mobility", pts: 2, type: "effort", days: 4 },
-      { area: "Back", pts: 3, type: "effort", days: 7 },
-      { area: "Shoulder", pts: 2, type: "effort", days: 7 },
+      { area: "Lower Body", pts: 6, type: "effort", days: 7 },
+      { area: "Trunk Strength", pts: 4, type: "effort", days: 7 },
+      { area: "Cardio", pts: 150, type: "active_minutes", days: 7 },
+      { area: "Mobility", pts: 3, type: "effort", days: 7 },
+      { area: "Back", pts: 6, type: "effort", days: 7 },
+      { area: "Shoulder", pts: 4, type: "effort", days: 7 },
       { area: "Trunk Control", pts: 2, type: "effort", days: 7 },
       { area: "Chest", pts: 3, type: "effort", days: 7 },
       { area: "Arms", pts: 2, type: "effort", days: 7 },
       { area: "Core Endurance", pts: 2, type: "effort", days: 7 },
+      { area: "Wrists", pts: 1, type: "effort", days: 7 },
+      { area: "Neck", pts: 1, type: "effort", days: 7 },
     ];
 
     for (const fa of focusAreas) {
