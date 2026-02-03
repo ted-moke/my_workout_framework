@@ -1,40 +1,38 @@
-// Domain types
+// Database row types
 
-export type PtsType = "effort" | "active_minutes";
-
-export interface User {
+export interface DbUser {
   id: number;
   name: string;
   active_plan_id: number | null;
 }
 
-export interface BodyArea {
+export interface DbBodyArea {
   id: number;
   name: string;
 }
 
-export interface Exercise {
+export interface DbExercise {
   id: number;
   body_area_id: number;
   name: string;
 }
 
-export interface WorkoutPlan {
+export interface DbWorkoutPlan {
   id: number;
   name: string;
   user_id: number;
 }
 
-export interface FocusArea {
+export interface DbFocusArea {
   id: number;
   plan_id: number;
   body_area_id: number;
   pts_per_period: number;
-  pts_type: PtsType;
+  pts_type: "effort" | "active_minutes";
   period_length_days: number;
 }
 
-export interface Workout {
+export interface DbWorkout {
   id: number;
   user_id: number;
   workout_date: string;
@@ -43,7 +41,7 @@ export interface Workout {
   finished: boolean;
 }
 
-export interface WorkoutSet {
+export interface DbSet {
   id: number;
   workout_id: number;
   exercise_id: number;
@@ -52,15 +50,12 @@ export interface WorkoutSet {
 
 // API response types
 
-export interface SetWithDetails extends WorkoutSet {
-  exercise_name: string;
-  body_area_name: string;
-}
+export type PtsType = "effort" | "active_minutes";
 
 export interface FocusAreaSuggestion {
   focusArea: {
     id: number;
-    bodyArea: BodyArea;
+    bodyArea: DbBodyArea;
     ptsPerPeriod: number;
     ptsType: PtsType;
     periodLengthDays: number;
@@ -70,12 +65,7 @@ export interface FocusAreaSuggestion {
   overdueFraction: number;
   fulfillmentFraction: number;
   priority: number;
-  exercises: Exercise[];
-}
-
-export interface ActiveWorkoutResponse {
-  workout: Workout;
-  sets: SetWithDetails[];
+  exercises: DbExercise[];
 }
 
 export interface SuggestionsResponse {
@@ -83,11 +73,25 @@ export interface SuggestionsResponse {
   activeWorkout: ActiveWorkoutResponse | null;
 }
 
-export interface PlanWithFocusAreas extends WorkoutPlan {
-  focusAreas: (FocusArea & { body_area_name: string })[];
+export interface ActiveWorkoutResponse {
+  workout: DbWorkout;
+  sets: SetWithDetails[];
 }
 
-export interface WorkoutWithSets extends Workout {
+export interface SetWithDetails {
+  id: number;
+  workout_id: number;
+  exercise_id: number;
+  pts: number;
+  exercise_name: string;
+  body_area_name: string;
+}
+
+export interface PlanWithFocusAreas extends DbWorkoutPlan {
+  focusAreas: (DbFocusArea & { body_area_name: string })[];
+}
+
+export interface WorkoutWithSets extends DbWorkout {
   sets: SetWithDetails[];
 }
 

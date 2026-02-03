@@ -1,17 +1,22 @@
 import { useState } from "react";
+import { UserProvider, useUser } from "./UserContext";
+import UserSelect from "./components/UserSelect";
 import Home from "./components/Home";
-import Dashboard from "./components/Dashboard";
+import Workout from "./components/Workout";
 import History from "./components/History";
-import Settings from "./components/Settings";
+import Plans from "./components/Plans";
 import "./App.css";
 
-type Tab = "home" | "form" | "history" | "settings";
+type Tab = "home" | "workout" | "history" | "plans";
 
-export default function App() {
+function AppContent() {
+  const { user, setUser } = useUser();
   const [tab, setTab] = useState<Tab>("home");
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleWorkoutLogged = () => {
+  if (!user) return <UserSelect />;
+
+  const handleWorkoutChange = () => {
     setRefreshKey((k) => k + 1);
   };
 
@@ -19,6 +24,12 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <h1>Workout Tracker</h1>
+        <div className="user-picker">
+          <span className="user-name">{user.name}</span>
+          <button className="user-switch" onClick={() => setUser(null)}>
+            Switch
+          </button>
+        </div>
         <nav className="tabs">
           <button
             className={tab === "home" ? "tab active" : "tab"}
@@ -27,10 +38,10 @@ export default function App() {
             Home
           </button>
           <button
-            className={tab === "form" ? "tab active" : "tab"}
-            onClick={() => setTab("form")}
+            className={tab === "workout" ? "tab active" : "tab"}
+            onClick={() => setTab("workout")}
           >
-            Form
+            Workout
           </button>
           <button
             className={tab === "history" ? "tab active" : "tab"}
@@ -39,24 +50,34 @@ export default function App() {
             History
           </button>
           <button
-            className={tab === "settings" ? "tab active" : "tab"}
-            onClick={() => setTab("settings")}
+            className={tab === "plans" ? "tab active" : "tab"}
+            onClick={() => setTab("plans")}
           >
-            Settings
+            Plans
           </button>
         </nav>
       </header>
       <main>
         {tab === "home" && (
           <Home
-            onStartWorkout={() => setTab("form")}
+            onStartWorkout={() => setTab("workout")}
             refreshKey={refreshKey}
           />
         )}
-        {tab === "form" && <Dashboard onWorkoutLogged={handleWorkoutLogged} />}
+        {tab === "workout" && (
+          <Workout onWorkoutChange={handleWorkoutChange} />
+        )}
         {tab === "history" && <History refreshKey={refreshKey} />}
-        {tab === "settings" && <Settings />}
+        {tab === "plans" && <Plans />}
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <UserProvider>
+      <AppContent />
+    </UserProvider>
   );
 }

@@ -1,73 +1,166 @@
-import type { StatusResponse, WorkoutLog, DayOption } from "./types";
+import type {
+  User,
+  BodyArea,
+  Exercise,
+  Workout,
+  WorkoutSet,
+  SuggestionsResponse,
+  PlanWithFocusAreas,
+  WorkoutWithSets,
+  ActiveWorkoutResponse,
+  CreatePlanBody,
+} from "./types";
 
 const BASE = "/api";
 
-export async function fetchStatus(dayNumber?: number): Promise<StatusResponse> {
-  const url = dayNumber ? `${BASE}/status?dayNumber=${dayNumber}` : `${BASE}/status`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch status");
+async function json<T>(res: Response): Promise<T> {
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(body || res.statusText);
+  }
   return res.json();
 }
 
-export async function fetchDays(): Promise<DayOption[]> {
-  const res = await fetch(`${BASE}/days`);
-  if (!res.ok) throw new Error("Failed to fetch days");
-  return res.json();
+// --- Users ---
+
+export function fetchUsers(): Promise<User[]> {
+  return fetch(`${BASE}/users`).then((r) => json<User[]>(r));
 }
 
-export async function fetchHistory(): Promise<WorkoutLog[]> {
-  const res = await fetch(`${BASE}/history`);
-  if (!res.ok) throw new Error("Failed to fetch history");
-  return res.json();
-}
-
-export async function startWorkout(dayId: number, workoutDate?: string): Promise<{ id: number; started_at: string }> {
-  const body: { dayId: number; workoutDate?: string } = { dayId };
-  if (workoutDate) body.workoutDate = workoutDate;
-  const res = await fetch(`${BASE}/workouts/start`, {
+export function createUser(name: string): Promise<User> {
+  return fetch(`${BASE}/users`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error("Failed to start workout");
-  return res.json();
+    body: JSON.stringify({ name }),
+  }).then((r) => json<User>(r));
 }
 
-export async function toggleExercise(workoutId: number, exerciseId: number): Promise<{ toggled: boolean }> {
-  const res = await fetch(`${BASE}/workouts/${workoutId}/toggle`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ exerciseId }),
-  });
-  if (!res.ok) throw new Error("Failed to toggle exercise");
-  return res.json();
-}
-
-export async function finishWorkout(workoutId: number): Promise<void> {
-  const res = await fetch(`${BASE}/workouts/${workoutId}/finish`, {
-    method: "POST",
-  });
-  if (!res.ok) throw new Error("Failed to finish workout");
-}
-
-export async function abortWorkout(workoutId: number): Promise<void> {
-  const res = await fetch(`${BASE}/workouts/${workoutId}/abort`, {
-    method: "POST",
-  });
-  if (!res.ok) throw new Error("Failed to abort workout");
-}
-
-export async function fetchSettings(): Promise<Record<string, unknown>> {
-  const res = await fetch(`${BASE}/settings`);
-  if (!res.ok) throw new Error("Failed to fetch settings");
-  return res.json();
-}
-
-export async function updateSettings(settings: Record<string, unknown>): Promise<void> {
-  const res = await fetch(`${BASE}/settings`, {
+export function setActivePlan(userId: number, planId: number | null): Promise<User> {
+  return fetch(`${BASE}/users/${userId}/active-plan`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(settings),
+    body: JSON.stringify({ planId }),
+  }).then((r) => json<User>(r));
+}
+
+// --- Plans ---
+
+export function fetchPlans(userId: number): Promise<PlanWithFocusAreas[]> {
+  return fetch(`${BASE}/users/${userId}/plans`).then((r) =>
+    json<PlanWithFocusAreas[]>(r)
+  );
+}
+
+export function createPlan(
+  userId: number,
+  plan: CreatePlanBody
+): Promise<PlanWithFocusAreas> {
+  return fetch(`${BASE}/users/${userId}/plans`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(plan),
+  }).then((r) => json<PlanWithFocusAreas>(r));
+}
+
+export function updatePlan(
+  planId: number,
+  plan: CreatePlanBody
+): Promise<PlanWithFocusAreas> {
+  return fetch(`${BASE}/plans/${planId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(plan),
+  }).then((r) => json<PlanWithFocusAreas>(r));
+}
+
+export function deletePlan(planId: number): Promise<void> {
+  return fetch(`${BASE}/plans/${planId}`, { method: "DELETE" }).then((r) => {
+    if (!r.ok) throw new Error("Failed to delete plan");
   });
-  if (!res.ok) throw new Error("Failed to update settings");
+}
+
+// --- Body Areas & Exercises ---
+
+export function fetchBodyAreas(): Promise<BodyArea[]> {
+  return fetch(`${BASE}/body-areas`).then((r) => json<BodyArea[]>(r));
+}
+
+export function fetchExercises(): Promise<(Exercise & { body_area_name: string })[]> {
+  return fetch(`${BASE}/exercises`).then((r) =>
+    json<(Exercise & { body_area_name: string })[]>(r)
+  );
+}
+
+// --- Suggestions ---
+
+export function fetchSuggestions(userId: number): Promise<SuggestionsResponse> {
+  return fetch(`${BASE}/users/${userId}/suggestions`).then((r) =>
+    json<SuggestionsResponse>(r)
+  );
+}
+
+// --- Workouts ---
+
+export function startWorkout(userId: number, workoutDate?: string): Promise<Workout> {
+  return fetch(`${BASE}/users/${userId}/workouts/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ workoutDate }),
+  }).then((r) => json<Workout>(r));
+}
+
+export function finishWorkout(workoutId: number): Promise<Workout> {
+  return fetch(`${BASE}/workouts/${workoutId}/finish`, {
+    method: "POST",
+  }).then((r) => json<Workout>(r));
+}
+
+export function abortWorkout(workoutId: number): Promise<void> {
+  return fetch(`${BASE}/workouts/${workoutId}/abort`, {
+    method: "POST",
+  }).then((r) => {
+    if (!r.ok) throw new Error("Failed to abort workout");
+  });
+}
+
+export function fetchActiveWorkout(
+  userId: number
+): Promise<ActiveWorkoutResponse | null> {
+  return fetch(`${BASE}/users/${userId}/workouts/active`).then((r) =>
+    json<ActiveWorkoutResponse | null>(r)
+  );
+}
+
+export function fetchHistory(userId: number): Promise<WorkoutWithSets[]> {
+  return fetch(`${BASE}/users/${userId}/history`).then((r) =>
+    json<WorkoutWithSets[]>(r)
+  );
+}
+
+// --- Sets ---
+
+export function addSet(
+  workoutId: number,
+  exerciseId: number,
+  pts: number
+): Promise<WorkoutSet> {
+  return fetch(`${BASE}/workouts/${workoutId}/sets`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ exerciseId, pts }),
+  }).then((r) => json<WorkoutSet>(r));
+}
+
+export function removeSet(setId: number): Promise<void> {
+  return fetch(`${BASE}/sets/${setId}`, { method: "DELETE" }).then((r) => {
+    if (!r.ok) throw new Error("Failed to remove set");
+  });
+}
+
+export function updateSet(setId: number, pts: number): Promise<WorkoutSet> {
+  return fetch(`${BASE}/sets/${setId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pts }),
+  }).then((r) => json<WorkoutSet>(r));
 }
