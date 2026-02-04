@@ -5,10 +5,11 @@ import Home from "./components/Home";
 import Workout from "./components/Workout";
 import History from "./components/History";
 import Plans from "./components/Plans";
+import Exercises from "./components/Exercises";
 import "./global.css";
 import styles from "./App.module.css";
 
-type Tab = "home" | "workout" | "history" | "plans";
+type Tab = "home" | "workout" | "history" | "plans" | "exercises";
 
 function AppContent() {
   const { user, setUser } = useUser();
@@ -56,6 +57,12 @@ function AppContent() {
           >
             Plans
           </button>
+          <button
+            className={`${styles.tab}${tab === "exercises" ? ` ${styles.tabActive}` : ""}`}
+            onClick={() => setTab("exercises")}
+          >
+            Exercises
+          </button>
         </nav>
       </header>
       <main>
@@ -70,6 +77,7 @@ function AppContent() {
         )}
         {tab === "history" && <History refreshKey={refreshKey} />}
         {tab === "plans" && <Plans />}
+        {tab === "exercises" && <Exercises />}
       </main>
     </div>
   );

@@ -202,4 +202,92 @@ router.delete("/api/plans/:id", async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/exercises - Create a new exercise
+router.post("/api/exercises", async (req: Request, res: Response) => {
+  const { name, bodyAreaId } = req.body;
+
+  if (!name?.trim()) {
+    res.status(400).json({ error: "Exercise name is required" });
+    return;
+  }
+  if (!bodyAreaId) {
+    res.status(400).json({ error: "Body area is required" });
+    return;
+  }
+
+  try {
+    const result = await pool.query<DbExercise & { body_area_name: string }>(
+      `INSERT INTO exercises (name, body_area_id) VALUES ($1, $2)
+       RETURNING exercises.*, (SELECT name FROM body_areas WHERE id = $2) as body_area_name`,
+      [name.trim(), bodyAreaId]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error("Error creating exercise:", err);
+    res.status(500).json({ error: "Failed to create exercise" });
+  }
+});
+
+// PUT /api/exercises/:id - Update an exercise
+router.put("/api/exercises/:id", async (req: Request, res: Response) => {
+  const exerciseId = parseInt(String(req.params.id), 10);
+  const { name, bodyAreaId } = req.body;
+
+  if (!name?.trim()) {
+    res.status(400).json({ error: "Exercise name is required" });
+    return;
+  }
+  if (!bodyAreaId) {
+    res.status(400).json({ error: "Body area is required" });
+    return;
+  }
+
+  try {
+    const result = await pool.query<DbExercise & { body_area_name: string }>(
+      `UPDATE exercises SET name = $1, body_area_id = $2 WHERE id = $3
+       RETURNING exercises.*, (SELECT name FROM body_areas WHERE id = $2) as body_area_name`,
+      [name.trim(), bodyAreaId, exerciseId]
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: "Exercise not found" });
+      return;
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error updating exercise:", err);
+    res.status(500).json({ error: "Failed to update exercise" });
+  }
+});
+
+// DELETE /api/exercises/:id - Delete an exercise (409 if referenced by sets)
+router.delete("/api/exercises/:id", async (req: Request, res: Response) => {
+  const exerciseId = parseInt(String(req.params.id), 10);
+
+  try {
+    const setsCheck = await pool.query(
+      "SELECT COUNT(*) FROM sets WHERE exercise_id = $1",
+      [exerciseId]
+    );
+    if (parseInt(setsCheck.rows[0].count, 10) > 0) {
+      res.status(409).json({
+        error: "Cannot delete exercise — it has sets referencing it",
+      });
+      return;
+    }
+
+    const result = await pool.query(
+      "DELETE FROM exercises WHERE id = $1 RETURNING id",
+      [exerciseId]
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: "Exercise not found" });
+      return;
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Error deleting exercise:", err);
+    res.status(500).json({ error: "Failed to delete exercise" });
+  }
+});
+
 export default router;

@@ -91,6 +91,38 @@ export function fetchExercises(): Promise<(Exercise & { body_area_name: string }
   );
 }
 
+export function createExercise(
+  name: string,
+  bodyAreaId: number
+): Promise<Exercise & { body_area_name: string }> {
+  return fetch(`${BASE}/exercises`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, bodyAreaId }),
+  }).then((r) => json<Exercise & { body_area_name: string }>(r));
+}
+
+export function updateExercise(
+  id: number,
+  name: string,
+  bodyAreaId: number
+): Promise<Exercise & { body_area_name: string }> {
+  return fetch(`${BASE}/exercises/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, bodyAreaId }),
+  }).then((r) => json<Exercise & { body_area_name: string }>(r));
+}
+
+export function deleteExercise(id: number): Promise<void> {
+  return fetch(`${BASE}/exercises/${id}`, { method: "DELETE" }).then(async (r) => {
+    if (!r.ok) {
+      const body = await r.json().catch(() => ({ error: "Failed to delete exercise" }));
+      throw new Error(body.error || "Failed to delete exercise");
+    }
+  });
+}
+
 // --- Suggestions ---
 
 export function fetchSuggestions(userId: number): Promise<SuggestionsResponse> {
