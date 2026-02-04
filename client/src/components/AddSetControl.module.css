@@ -1,0 +1,58 @@
+.addSetControl {
+  margin-top: 0.25rem;
+}
+
+.setPresets {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.setPresetBtn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--bg-elevated-hover);
+  color: var(--text-tertiary);
+  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  min-width: 2rem;
+  text-align: center;
+}
+
+.setPresetBtn:hover:not(:disabled) {
+  background: var(--bg-elevated-hover);
+  border-color: var(--color-accent);
+  color: var(--text-primary);
+}
+
+.setPresetBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.custom {
+  color: var(--text-muted);
+}
+
+.customPtsForm {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.customPtsInput {
+  width: 3rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-elevated-hover);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  padding: 0.2rem 0.35rem;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.customPtsInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}

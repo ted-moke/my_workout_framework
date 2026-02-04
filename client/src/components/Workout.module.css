@@ -1,0 +1,47 @@
+.dashboard {
+}
+
+.dayHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.saveHint {
+  color: var(--color-success-light);
+  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
+}
+
+.exerciseList {
+  margin-bottom: 1rem;
+}
+
+.startWorkoutRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.datePickerRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.selectorLabel {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  min-width: 2.5rem;
+}
+
+.workoutActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.workoutActions :global(.btn-finish) {
+  flex: 1;
+}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FocusAreaSuggestion, SetWithDetails } from "../types";
 import ExerciseRow from "./ExerciseRow";
+import styles from "./FocusAreaCard.module.css";
 
 interface Props {
   suggestion: FocusAreaSuggestion;
@@ -39,10 +40,10 @@ export default function FocusAreaCard({
   );
 
   return (
-    <div className={`focus-area-card${isDue ? " overdue" : " on-track"}`}>
-      <button className="focus-area-header" onClick={() => setOpen(!open)}>
+    <div className={`${styles.focusAreaCard}${isDue ? ` ${styles.overdue}` : ""}`}>
+      <button className={styles.focusAreaHeader} onClick={() => setOpen(!open)}>
         <span className="group-arrow">{open ? "\u25BC" : "\u25B6"}</span>
-        <span className="focus-area-name">{focusArea.bodyArea.name}</span>
+        <span className={styles.focusAreaName}>{focusArea.bodyArea.name}</span>
         <span className={`due-label${isDue ? " overdue-label" : " on-track-label"}`}>
           {dueLabel(suggestion)}
         </span>
@@ -52,7 +53,7 @@ export default function FocusAreaCard({
       </button>
       {open && (
         <>
-          <div className="focus-area-progress">
+          <div className={styles.focusAreaProgress}>
             <div className="progress-bar">
               <div
                 className={`progress-fill${pct >= 100 ? " complete" : ""}`}
@@ -64,7 +65,7 @@ export default function FocusAreaCard({
               {focusArea.ptsType === "active_minutes" ? "min" : "pts"}
             </span>
           </div>
-          <div className="focus-area-exercises">
+          <div className={styles.focusAreaExercises}>
             {suggestion.exercises.map((ex) => (
               <ExerciseRow
                 key={ex.id}

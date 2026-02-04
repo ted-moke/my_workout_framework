@@ -1,0 +1,70 @@
+.app {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.appHeader {
+  margin-bottom: 1.5rem;
+}
+
+.appHeader h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.userPicker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.userName {
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.userSwitch {
+  background: none;
+  border: 1px solid var(--border-input);
+  color: var(--text-muted);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.userSwitch:hover {
+  color: var(--text-tertiary);
+  border-color: var(--border-input-hover);
+}
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.tab {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab:hover {
+  color: var(--text-tertiary);
+}
+
+.tabActive {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}

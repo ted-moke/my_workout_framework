@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { PtsType } from "../types";
+import styles from "./AddSetControl.module.css";
 
 interface Props {
   ptsType: PtsType;
@@ -14,12 +15,12 @@ export default function AddSetControl({ ptsType, onAdd, disabled }: Props) {
   if (ptsType === "active_minutes") {
     const presets = [15, 30, 45, 60];
     return (
-      <div className="add-set-control">
-        <div className="set-presets">
+      <div className={styles.addSetControl}>
+        <div className={styles.setPresets}>
           {presets.map((m) => (
             <button
               key={m}
-              className="set-preset-btn"
+              className={styles.setPresetBtn}
               onClick={() => onAdd(m)}
               disabled={disabled}
             >
@@ -28,7 +29,7 @@ export default function AddSetControl({ ptsType, onAdd, disabled }: Props) {
           ))}
           {!showCustom ? (
             <button
-              className="set-preset-btn custom"
+              className={`${styles.setPresetBtn} ${styles.custom}`}
               onClick={() => setShowCustom(true)}
               disabled={disabled}
             >
@@ -36,7 +37,7 @@ export default function AddSetControl({ ptsType, onAdd, disabled }: Props) {
             </button>
           ) : (
             <form
-              className="custom-pts-form"
+              className={styles.customPtsForm}
               onSubmit={(e) => {
                 e.preventDefault();
                 const val = parseInt(customValue, 10);
@@ -50,13 +51,13 @@ export default function AddSetControl({ ptsType, onAdd, disabled }: Props) {
               <input
                 type="number"
                 min="1"
-                className="custom-pts-input"
+                className={styles.customPtsInput}
                 placeholder="min"
                 value={customValue}
                 onChange={(e) => setCustomValue(e.target.value)}
                 autoFocus
               />
-              <button type="submit" className="set-preset-btn" disabled={disabled}>
+              <button type="submit" className={styles.setPresetBtn} disabled={disabled}>
                 +
               </button>
             </form>
@@ -68,12 +69,12 @@ export default function AddSetControl({ ptsType, onAdd, disabled }: Props) {
 
   // Effort type: 1/2/3 presets with custom option
   return (
-    <div className="add-set-control">
-      <div className="set-presets">
+    <div className={styles.addSetControl}>
+      <div className={styles.setPresets}>
         {[1, 2, 3].map((p) => (
           <button
             key={p}
-            className="set-preset-btn"
+            className={styles.setPresetBtn}
             onClick={() => onAdd(p)}
             disabled={disabled}
             title={p === 1 ? "Light" : p === 2 ? "Moderate" : "Hard"}
@@ -83,7 +84,7 @@ export default function AddSetControl({ ptsType, onAdd, disabled }: Props) {
         ))}
         {!showCustom ? (
           <button
-            className="set-preset-btn custom"
+            className={`${styles.setPresetBtn} ${styles.custom}`}
             onClick={() => setShowCustom(true)}
             disabled={disabled}
           >
@@ -91,7 +92,7 @@ export default function AddSetControl({ ptsType, onAdd, disabled }: Props) {
           </button>
         ) : (
           <form
-            className="custom-pts-form"
+            className={styles.customPtsForm}
             onSubmit={(e) => {
               e.preventDefault();
               const val = parseInt(customValue, 10);
@@ -105,13 +106,13 @@ export default function AddSetControl({ ptsType, onAdd, disabled }: Props) {
             <input
               type="number"
               min="1"
-              className="custom-pts-input"
+              className={styles.customPtsInput}
               placeholder="pts"
               value={customValue}
               onChange={(e) => setCustomValue(e.target.value)}
               autoFocus
             />
-            <button type="submit" className="set-preset-btn" disabled={disabled}>
+            <button type="submit" className={styles.setPresetBtn} disabled={disabled}>
               +
             </button>
           </form>

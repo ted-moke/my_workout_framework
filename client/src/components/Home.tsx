@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchSuggestions, fetchHistory } from "../api";
 import { useUser } from "../UserContext";
 import type { FocusAreaSuggestion, WorkoutWithSets } from "../types";
+import styles from "./Home.module.css";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -84,34 +85,41 @@ export default function Home({
 
   const hasWorkouts = history.length > 0;
   const lastLog = hasWorkouts ? history[0] : null;
-  const dueAreas = suggestions.filter((s) => s.priority > 0);
+  const completedAreas = suggestions.filter((s) => s.fulfillmentFraction >= 1);
+  const partialAreas = suggestions.filter(
+    (s) => s.fulfillmentFraction > 0 && s.fulfillmentFraction < 1
+  );
+  const dueAreas = suggestions.filter(
+    (s) => s.fulfillmentFraction < 1 && s.priority > 0
+  );
+  const hasProgress = completedAreas.length > 0 || partialAreas.length > 0;
 
   return (
-    <div className="home">
+    <div className={styles.home}>
       {hasWorkouts && lastLog ? (
         <div className="card">
           <h2>Recent Activity</h2>
-          <div className="stats-grid">
-            <div className="stat-item">
-              <span className="stat-value">
+          <div className={styles.statsGrid}>
+            <div className={styles.statItem}>
+              <span className={styles.statValue}>
                 {timeAgo(lastLog.completed_at!)}
               </span>
-              <span className="stat-label">Last workout</span>
+              <span className={styles.statLabel}>Last workout</span>
             </div>
-            <div className="stat-item">
-              <span className="stat-value">{workoutsThisWeek(history)}</span>
-              <span className="stat-label">This week</span>
+            <div className={styles.statItem}>
+              <span className={styles.statValue}>{workoutsThisWeek(history)}</span>
+              <span className={styles.statLabel}>This week</span>
             </div>
-            <div className="stat-item">
-              <span className="stat-value">
+            <div className={styles.statItem}>
+              <span className={styles.statValue}>
                 {currentStreak(history)} day
                 {currentStreak(history) !== 1 ? "s" : ""}
               </span>
-              <span className="stat-label">Current streak</span>
+              <span className={styles.statLabel}>Current streak</span>
             </div>
-            <div className="stat-item">
-              <span className="stat-value">{history.length}</span>
-              <span className="stat-label">Total workouts</span>
+            <div className={styles.statItem}>
+              <span className={styles.statValue}>{history.length}</span>
+              <span className={styles.statLabel}>Total workouts</span>
             </div>
           </div>
         </div>
@@ -125,48 +133,93 @@ export default function Home({
       )}
 
       {suggestions.length > 0 ? (
-        <div className="card">
-          <h2>What's Due</h2>
-          <div className="due-list">
-            {suggestions.slice(0, 6).map((s) => {
-              const pct = Math.min(
-                100,
-                Math.round(s.fulfillmentFraction * 100)
-              );
-              const isDue = s.priority > 0;
-              return (
-                <div
-                  key={s.focusArea.id}
-                  className={`due-item${isDue ? " overdue" : " on-track"}`}
-                >
-                  <div className="due-item-header">
-                    <span className="due-area-name">
-                      {s.focusArea.bodyArea.name}
-                    </span>
-                    <span
-                      className={`due-label${isDue ? " overdue-label" : " on-track-label"}`}
-                    >
-                      {dueLabel(s)}
+        <>
+          {hasProgress && (
+            <div className="card">
+              <h2>Progress</h2>
+              <div className={styles.dueList}>
+                {completedAreas.map((s) => (
+                  <div key={s.focusArea.id} className={styles.dueItem}>
+                    <div className={styles.dueItemHeader}>
+                      <span className={styles.dueAreaName}>
+                        {s.focusArea.bodyArea.name}
+                      </span>
+                      <span className="due-label on-track-label">done</span>
+                    </div>
+                    <div className="progress-bar">
+                      <div className="progress-fill complete" style={{ width: "100%" }} />
+                    </div>
+                    <span className="due-pts">
+                      {s.ptsFulfilled} / {s.focusArea.ptsPerPeriod}{" "}
+                      {s.focusArea.ptsType === "active_minutes" ? "min" : "pts"}
                     </span>
                   </div>
-                  <div className="progress-bar">
-                    <div
-                      className={`progress-fill${pct >= 100 ? " complete" : ""}`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <span className="due-pts">
-                    {s.ptsFulfilled} / {s.focusArea.ptsPerPeriod}{" "}
-                    {s.focusArea.ptsType === "active_minutes" ? "min" : "pts"}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          {dueAreas.length === 0 && (
-            <p className="muted">All caught up! Nice work.</p>
+                ))}
+                {partialAreas.map((s) => {
+                  const pct = Math.round(s.fulfillmentFraction * 100);
+                  return (
+                    <div key={s.focusArea.id} className={styles.dueItem}>
+                      <div className={styles.dueItemHeader}>
+                        <span className={styles.dueAreaName}>
+                          {s.focusArea.bodyArea.name}
+                        </span>
+                        <span className="due-label partial-label">{pct}%</span>
+                      </div>
+                      <div className="progress-bar">
+                        <div
+                          className="progress-fill"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="due-pts">
+                        {s.ptsFulfilled} / {s.focusArea.ptsPerPeriod}{" "}
+                        {s.focusArea.ptsType === "active_minutes" ? "min" : "pts"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
-        </div>
+
+          <div className="card">
+            <h2>What's Due</h2>
+            {dueAreas.length > 0 ? (
+              <div className={styles.dueList}>
+                {dueAreas.slice(0, 6).map((s) => {
+                  const pct = Math.min(
+                    100,
+                    Math.round(s.fulfillmentFraction * 100)
+                  );
+                  return (
+                    <div key={s.focusArea.id} className={styles.dueItem}>
+                      <div className={styles.dueItemHeader}>
+                        <span className={styles.dueAreaName}>
+                          {s.focusArea.bodyArea.name}
+                        </span>
+                        <span className="due-label overdue-label">
+                          {dueLabel(s)}
+                        </span>
+                      </div>
+                      <div className="progress-bar">
+                        <div
+                          className="progress-fill"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="due-pts">
+                        {s.ptsFulfilled} / {s.focusArea.ptsPerPeriod}{" "}
+                        {s.focusArea.ptsType === "active_minutes" ? "min" : "pts"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="muted">All caught up! Nice work.</p>
+            )}
+          </div>
+        </>
       ) : (
         <div className="card">
           <h2>No Active Plan</h2>

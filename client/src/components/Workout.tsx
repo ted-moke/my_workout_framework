@@ -10,6 +10,7 @@ import {
 import { useUser } from "../UserContext";
 import type { FocusAreaSuggestion, SetWithDetails, Workout as WorkoutType } from "../types";
 import FocusAreaCard from "./FocusAreaCard";
+import styles from "./Workout.module.css";
 
 function todayStr(): string {
   const d = new Date();
@@ -148,7 +149,7 @@ export default function Workout({
 
   if (suggestions.length === 0) {
     return (
-      <div className="dashboard">
+      <div className={styles.dashboard}>
         <div className="card">
           <h2>No Active Plan</h2>
           <p className="muted">
@@ -160,20 +161,20 @@ export default function Workout({
   }
 
   return (
-    <div className="dashboard">
+    <div className={styles.dashboard}>
       <div className="card">
-        <div className="day-header">
+        <div className={styles.dayHeader}>
           <h2>{isActive ? "Workout in Progress" : "Ready to Work Out"}</h2>
           {isActive && <span className="active-badge">LIVE</span>}
         </div>
 
         {isActive && (
-          <p className="save-hint">
+          <p className={styles.saveHint}>
             Sets are saved as you add them.
           </p>
         )}
 
-        <div className="exercise-list">
+        <div className={styles.exerciseList}>
           {suggestions.map((s, i) => (
             <FocusAreaCard
               key={s.focusArea.id}
@@ -188,9 +189,9 @@ export default function Workout({
         </div>
 
         {!isActive ? (
-          <div className="start-workout-row">
-            <div className="date-picker-row">
-              <label className="selector-label" htmlFor="workout-date">Date</label>
+          <div className={styles.startWorkoutRow}>
+            <div className={styles.datePickerRow}>
+              <label className={styles.selectorLabel} htmlFor="workout-date">Date</label>
               <input
                 id="workout-date"
                 type="date"
@@ -205,7 +206,7 @@ export default function Workout({
             </button>
           </div>
         ) : (
-          <div className="workout-actions">
+          <div className={styles.workoutActions}>
             <button
               className="btn-finish"
               onClick={handleFinish}

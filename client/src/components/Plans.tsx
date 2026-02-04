@@ -9,6 +9,7 @@ import {
 } from "../api";
 import { useUser } from "../UserContext";
 import type { BodyArea, PlanWithFocusAreas, PtsType, CreatePlanBody } from "../types";
+import styles from "./Plans.module.css";
 
 interface FocusAreaRow {
   bodyAreaId: number;
@@ -138,8 +139,8 @@ export default function Plans() {
     return (
       <div className="card">
         <h2>{editing === "new" ? "New Plan" : "Edit Plan"}</h2>
-        <div className="plan-editor">
-          <div className="plan-name-row">
+        <div className={styles.planEditor}>
+          <div className={styles.planNameRow}>
             <label>Plan Name</label>
             <input
               type="text"
@@ -151,7 +152,7 @@ export default function Plans() {
 
           <h3>Focus Areas</h3>
           {editRows.map((row, i) => (
-            <div key={i} className="focus-area-editor-row">
+            <div key={i} className={styles.focusAreaEditorRow}>
               <select
                 value={row.bodyAreaId}
                 onChange={(e) =>
@@ -165,7 +166,7 @@ export default function Plans() {
                   </option>
                 ))}
               </select>
-              <div className="editor-field">
+              <div className={styles.editorField}>
                 <label>Points</label>
                 <input
                   type="number"
@@ -178,7 +179,7 @@ export default function Plans() {
                   }
                 />
               </div>
-              <div className="editor-field">
+              <div className={styles.editorField}>
                 <label>Type</label>
                 <select
                   value={row.ptsType}
@@ -190,7 +191,7 @@ export default function Plans() {
                   <option value="active_minutes">Active Min</option>
                 </select>
               </div>
-              <div className="editor-field">
+              <div className={styles.editorField}>
                 <label>Every (days)</label>
                 <input
                   type="number"
@@ -204,7 +205,7 @@ export default function Plans() {
                 />
               </div>
               <button
-                className="btn-remove-row"
+                className={styles.btnRemoveRow}
                 onClick={() => removeRow(i)}
                 title="Remove"
               >
@@ -214,13 +215,13 @@ export default function Plans() {
           ))}
 
           <button
-            className="btn-add-row"
+            className={styles.btnAddRow}
             onClick={() => setEditRows((prev) => [...prev, emptyRow()])}
           >
             + Add Focus Area
           </button>
 
-          <div className="plan-editor-actions">
+          <div className={styles.planEditorActions}>
             <button
               className="btn-primary"
               onClick={handleSave}
@@ -244,28 +245,28 @@ export default function Plans() {
       {plans.length === 0 ? (
         <p className="muted">No plans yet. Create one to get started.</p>
       ) : (
-        <div className="plan-list">
+        <div className={styles.planList}>
           {plans.map((plan) => {
             const isActive = user?.active_plan_id === plan.id;
             return (
               <div
                 key={plan.id}
-                className={`plan-card${isActive ? " active-plan" : ""}`}
+                className={`${styles.planCard}${isActive ? ` ${styles.activePlan}` : ""}`}
               >
-                <div className="plan-card-header">
-                  <span className="plan-name">{plan.name}</span>
+                <div className={styles.planCardHeader}>
+                  <span className={styles.planName}>{plan.name}</span>
                   {isActive && <span className="active-badge">ACTIVE</span>}
                 </div>
-                <div className="plan-focus-areas">
+                <div className={styles.planFocusAreas}>
                   {plan.focusAreas.map((fa) => (
-                    <span key={fa.id} className="plan-focus-tag">
+                    <span key={fa.id} className={styles.planFocusTag}>
                       {fa.body_area_name}: {fa.pts_per_period}
                       {fa.pts_type === "active_minutes" ? "min" : "pts"} /{" "}
                       {fa.period_length_days}d
                     </span>
                   ))}
                 </div>
-                <div className="plan-card-actions">
+                <div className={styles.planCardActions}>
                   {!isActive && (
                     <button
                       className="btn-small"

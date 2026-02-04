@@ -1,0 +1,191 @@
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.historyItem {
+  border-bottom: 1px solid var(--border-primary);
+  padding-bottom: 0.5rem;
+}
+
+.historyItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.historyHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  width: 100%;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  padding: 0.25rem 0;
+}
+
+.historyHeader:hover {
+  color: var(--text-primary);
+}
+
+.historyDate {
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 5rem;
+}
+
+.historyAreas {
+  flex: 1;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.historyTotalPts {
+  color: var(--color-accent);
+  font-size: 0.8rem;
+}
+
+.historyDetails {
+  padding: 0.5rem 0 0.25rem 1rem;
+}
+
+.historyAreaGroup {
+  margin-bottom: 0.5rem;
+}
+
+.historyAreaHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+}
+
+.historyAreaPts {
+  color: var(--color-accent);
+  font-size: 0.8rem;
+}
+
+.historyExercises {
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  margin-top: 0.125rem;
+}
+
+.historyFullDate {
+  display: flex;
+  align-items: center;
+}
+
+/* History edit mode */
+.historyEditDate {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.historyEditDate label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.historyEditSet {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.historyEditSetName {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+}
+
+.historyEditSetPts {
+  width: 3.5rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  padding: 0.2rem 0.35rem;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.historyEditSetPts:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.historyEditSetUnit {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
+.historyAddSet {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-primary);
+}
+
+.historyAddSet select {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.historyAddSet select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.historyAddSetPts {
+  width: 3.5rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.historyAddSetPts:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.historyEditActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-primary);
+}
+
+.historyEditActions :global(.btn-abort) {
+  flex: 0;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.75rem;
+}
+
+.historyEditActions :global(.btn-primary) {
+  flex: 1;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.75rem;
+}

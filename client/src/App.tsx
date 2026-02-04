@@ -5,7 +5,8 @@ import Home from "./components/Home";
 import Workout from "./components/Workout";
 import History from "./components/History";
 import Plans from "./components/Plans";
-import "./App.css";
+import "./global.css";
+import styles from "./App.module.css";
 
 type Tab = "home" | "workout" | "history" | "plans";
 
@@ -21,36 +22,36 @@ function AppContent() {
   };
 
   return (
-    <div className="app">
-      <header className="app-header">
+    <div className={styles.app}>
+      <header className={styles.appHeader}>
         <h1>Workout Tracker</h1>
-        <div className="user-picker">
-          <span className="user-name">{user.name}</span>
-          <button className="user-switch" onClick={() => setUser(null)}>
+        <div className={styles.userPicker}>
+          <span className={styles.userName}>{user.name}</span>
+          <button className={styles.userSwitch} onClick={() => setUser(null)}>
             Switch
           </button>
         </div>
-        <nav className="tabs">
+        <nav className={styles.tabs}>
           <button
-            className={tab === "home" ? "tab active" : "tab"}
+            className={`${styles.tab}${tab === "home" ? ` ${styles.tabActive}` : ""}`}
             onClick={() => setTab("home")}
           >
             Home
           </button>
           <button
-            className={tab === "workout" ? "tab active" : "tab"}
+            className={`${styles.tab}${tab === "workout" ? ` ${styles.tabActive}` : ""}`}
             onClick={() => setTab("workout")}
           >
             Workout
           </button>
           <button
-            className={tab === "history" ? "tab active" : "tab"}
+            className={`${styles.tab}${tab === "history" ? ` ${styles.tabActive}` : ""}`}
             onClick={() => setTab("history")}
           >
             History
           </button>
           <button
-            className={tab === "plans" ? "tab active" : "tab"}
+            className={`${styles.tab}${tab === "plans" ? ` ${styles.tabActive}` : ""}`}
             onClick={() => setTab("plans")}
           >
             Plans

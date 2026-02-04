@@ -1,6 +1,7 @@
 import type { Exercise, SetWithDetails, PtsType } from "../types";
 import SetBadge from "./SetBadge";
 import AddSetControl from "./AddSetControl";
+import styles from "./ExerciseRow.module.css";
 
 interface Props {
   exercise: Exercise;
@@ -23,17 +24,17 @@ export default function ExerciseRow({
   const totalPts = exerciseSets.reduce((sum, s) => sum + s.pts, 0);
 
   return (
-    <div className="exercise-row">
-      <div className="exercise-row-header">
-        <span className="exercise-name">{exercise.name}</span>
+    <div className={styles.exerciseRow}>
+      <div className={styles.exerciseRowHeader}>
+        <span className={styles.exerciseName}>{exercise.name}</span>
         {exerciseSets.length > 0 && (
-          <span className="exercise-total">
+          <span className={styles.exerciseTotal}>
             {totalPts} {ptsType === "active_minutes" ? "min" : "pts"}
           </span>
         )}
       </div>
       {exerciseSets.length > 0 && (
-        <div className="exercise-sets">
+        <div className={styles.exerciseSets}>
           {exerciseSets.map((s) => (
             <SetBadge
               key={s.id}

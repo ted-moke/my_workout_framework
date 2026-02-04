@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useUser } from "../UserContext";
 import { createUser } from "../api";
+import styles from "./UserSelect.module.css";
 
 export default function UserSelect() {
   const { users, setUser, refreshUsers } = useUser();
@@ -24,16 +25,16 @@ export default function UserSelect() {
   };
 
   return (
-    <div className="user-select">
+    <div className={styles.userSelect}>
       <h2>Who's working out?</h2>
-      <div className="user-list">
+      <div className={styles.userList}>
         {users.map((u) => (
-          <button key={u.id} className="user-card" onClick={() => setUser(u)}>
+          <button key={u.id} className={styles.userCard} onClick={() => setUser(u)}>
             {u.name}
           </button>
         ))}
       </div>
-      <div className="user-create">
+      <div className={styles.userCreate}>
         <input
           type="text"
           placeholder="New user name"

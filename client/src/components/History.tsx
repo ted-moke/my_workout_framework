@@ -10,6 +10,7 @@ import {
 } from "../api";
 import { useUser } from "../UserContext";
 import type { WorkoutWithSets, SetWithDetails, Exercise } from "../types";
+import styles from "./History.module.css";
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -220,25 +221,25 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
   return (
     <div className="card">
       <h2>Recent Workouts</h2>
-      <div className="history-list">
+      <div className={styles.historyList}>
         {logs.map((log) => {
           const areas = groupSetsByArea(log);
           const isExpanded = expanded.has(log.id);
           const isEditing = editingId === log.id;
           const totalPts = areas.reduce((sum, a) => sum + a.totalPts, 0);
           return (
-            <div key={log.id} className="history-item">
+            <div key={log.id} className={styles.historyItem}>
               <button
-                className="history-header"
+                className={styles.historyHeader}
                 onClick={() => toggleExpand(log.id)}
               >
-                <span className="history-date">
+                <span className={styles.historyDate}>
                   {formatRelativeDate(log.workout_date)}
                 </span>
-                <span className="history-areas">
+                <span className={styles.historyAreas}>
                   {areas.map((a) => a.area).join(", ")}
                 </span>
-                <span className="history-total-pts">
+                <span className={styles.historyTotalPts}>
                   {totalPts} pts
                 </span>
                 <span className="group-arrow">
@@ -246,8 +247,8 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                 </span>
               </button>
               {isExpanded && !isEditing && (
-                <div className="history-details">
-                  <div className="history-full-date">
+                <div className={styles.historyDetails}>
+                  <div className={styles.historyFullDate}>
                     <small>{formatDate(log.workout_date)}</small>
                     <button
                       className="btn-small"
@@ -258,14 +259,14 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                     </button>
                   </div>
                   {areas.map((a) => (
-                    <div key={a.area} className="history-area-group">
-                      <div className="history-area-header">
+                    <div key={a.area} className={styles.historyAreaGroup}>
+                      <div className={styles.historyAreaHeader}>
                         <span>{a.area}</span>
-                        <span className="history-area-pts">
+                        <span className={styles.historyAreaPts}>
                           {a.totalPts} pts
                         </span>
                       </div>
-                      <div className="history-exercises">
+                      <div className={styles.historyExercises}>
                         {a.exercises.join(", ")}
                       </div>
                     </div>
@@ -273,9 +274,9 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                 </div>
               )}
               {isExpanded && isEditing && (
-                <div className="history-details">
+                <div className={styles.historyDetails}>
                   {/* Date edit */}
-                  <div className="history-edit-date">
+                  <div className={styles.historyEditDate}>
                     <label>Date:</label>
                     <input
                       type="date"
@@ -287,18 +288,18 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
 
                   {/* Sets by area */}
                   {groupSetsForEdit(log.sets).map((group) => (
-                    <div key={group.area} className="history-area-group">
-                      <div className="history-area-header">
+                    <div key={group.area} className={styles.historyAreaGroup}>
+                      <div className={styles.historyAreaHeader}>
                         <span>{group.area}</span>
                       </div>
                       {group.sets.map((s) => (
-                        <div key={s.id} className="history-edit-set">
-                          <span className="history-edit-set-name">
+                        <div key={s.id} className={styles.historyEditSet}>
+                          <span className={styles.historyEditSetName}>
                             {s.exercise_name}
                           </span>
                           <input
                             type="number"
-                            className="history-edit-set-pts"
+                            className={styles.historyEditSetPts}
                             defaultValue={s.pts}
                             min={0}
                             onBlur={(e) => {
@@ -313,7 +314,7 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                               }
                             }}
                           />
-                          <span className="history-edit-set-unit">pts</span>
+                          <span className={styles.historyEditSetUnit}>pts</span>
                           <button
                             className="set-badge-remove"
                             onClick={() => handleRemoveSet(log.id, s.id)}
@@ -328,7 +329,7 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
 
                   {/* Add set */}
                   {exercises.length > 0 && (
-                    <div className="history-add-set">
+                    <div className={styles.historyAddSet}>
                       <select
                         value={addExerciseId ?? ""}
                         onChange={(e) => setAddExerciseId(e.target.value ? Number(e.target.value) : null)}
@@ -342,7 +343,7 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                       </select>
                       <input
                         type="number"
-                        className="history-add-set-pts"
+                        className={styles.historyAddSetPts}
                         placeholder="pts"
                         min={0}
                         value={addPts}
@@ -362,7 +363,7 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                   )}
 
                   {/* Actions */}
-                  <div className="history-edit-actions">
+                  <div className={styles.historyEditActions}>
                     <button
                       className="btn-abort"
                       onClick={() => handleDeleteWorkout(log.id)}
