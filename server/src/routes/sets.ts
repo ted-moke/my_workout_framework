@@ -15,13 +15,13 @@ router.post("/api/workouts/:workoutId/sets", async (req: Request, res: Response)
   }
 
   try {
-    // Verify workout is active
+    // Verify workout exists
     const workoutCheck = await pool.query(
-      "SELECT id FROM workouts WHERE id = $1 AND finished = false",
+      "SELECT id FROM workouts WHERE id = $1",
       [workoutId]
     );
     if (workoutCheck.rows.length === 0) {
-      res.status(404).json({ error: "Active workout not found" });
+      res.status(404).json({ error: "Workout not found" });
       return;
     }
 

@@ -1,27 +1,53 @@
 import { useEffect, useState } from "react";
-import { fetchHistory } from "../api";
+import {
+  fetchHistory,
+  fetchExercises,
+  updateWorkoutDate,
+  updateSet,
+  removeSet,
+  addSet,
+  deleteWorkout,
+} from "../api";
 import { useUser } from "../UserContext";
-import type { WorkoutWithSets } from "../types";
+import type { WorkoutWithSets, SetWithDetails, Exercise } from "../types";
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatRelativeDate(dateStr: string): string {
+  const date = new Date(dateStr);
   const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffSec = Math.round(diffMs / 1000);
-  const diffMin = Math.round(diffSec / 60);
-  const diffHr = Math.round(diffMin / 60);
-  const diffDay = Math.round(diffHr / 24);
+  const diffTime = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-  const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
 
-  if (Math.abs(diffDay) > 0) {
-    return rtf.format(-diffDay, "day");
-  } else if (Math.abs(diffHr) > 0) {
-    return rtf.format(-diffHr, "hour");
-  } else if (Math.abs(diffMin) > 0) {
-    return rtf.format(-diffMin, "minute");
+  // Calculate Monday of this week
+  const dayOfWeek = now.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+  const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const mondayThisWeek = new Date(now);
+  mondayThisWeek.setDate(now.getDate() - daysToMonday);
+  mondayThisWeek.setHours(0, 0, 0, 0);
+
+  // Calculate Monday of last week
+  const mondayLastWeek = new Date(mondayThisWeek);
+  mondayLastWeek.setDate(mondayThisWeek.getDate() - 7);
+
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+  if (date >= mondayThisWeek) {
+    return days[date.getDay()];
+  } else if (date >= mondayLastWeek) {
+    return "Last " + days[date.getDay()];
   } else {
-    return rtf.format(-diffSec, "second");
+    return `${diffDays} days ago`;
   }
 }
 
@@ -48,10 +74,26 @@ function groupSetsByArea(
   }));
 }
 
+function groupSetsForEdit(
+  sets: SetWithDetails[]
+): { area: string; sets: SetWithDetails[] }[] {
+  const grouped = new Map<string, SetWithDetails[]>();
+  for (const s of sets) {
+    const arr = grouped.get(s.body_area_name) ?? [];
+    arr.push(s);
+    grouped.set(s.body_area_name, arr);
+  }
+  return Array.from(grouped.entries()).map(([area, sets]) => ({ area, sets }));
+}
+
 export default function History({ refreshKey }: { refreshKey?: number }) {
   const { user } = useUser();
   const [logs, setLogs] = useState<WorkoutWithSets[]>([]);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [exercises, setExercises] = useState<(Exercise & { body_area_name: string })[]>([]);
+  const [addExerciseId, setAddExerciseId] = useState<number | null>(null);
+  const [addPts, setAddPts] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -68,6 +110,100 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
       else next.add(id);
       return next;
     });
+  };
+
+  const enterEdit = async (id: number) => {
+    if (exercises.length === 0) {
+      try {
+        const exs = await fetchExercises();
+        setExercises(exs);
+      } catch {
+        // silently fail, user can still edit existing sets
+      }
+    }
+    setEditingId(id);
+    setAddExerciseId(null);
+    setAddPts("");
+  };
+
+  const exitEdit = () => {
+    setEditingId(null);
+    setAddExerciseId(null);
+    setAddPts("");
+  };
+
+  const handleDateChange = async (workoutId: number, newDate: string) => {
+    try {
+      const updated = await updateWorkoutDate(workoutId, newDate);
+      setLogs((prev) =>
+        prev.map((w) => (w.id === workoutId ? { ...w, workout_date: updated.workout_date } : w))
+      );
+    } catch {
+      // revert not needed since input is controlled by logs state
+    }
+  };
+
+  const handleUpdateSet = async (workoutId: number, setId: number, newPts: number) => {
+    try {
+      await updateSet(setId, newPts);
+      setLogs((prev) =>
+        prev.map((w) =>
+          w.id === workoutId
+            ? { ...w, sets: w.sets.map((s) => (s.id === setId ? { ...s, pts: newPts } : s)) }
+            : w
+        )
+      );
+    } catch {
+      // keep old value on failure
+    }
+  };
+
+  const handleRemoveSet = async (workoutId: number, setId: number) => {
+    try {
+      await removeSet(setId);
+      setLogs((prev) =>
+        prev.map((w) =>
+          w.id === workoutId ? { ...w, sets: w.sets.filter((s) => s.id !== setId) } : w
+        )
+      );
+    } catch {
+      // no-op
+    }
+  };
+
+  const handleAddSet = async (workoutId: number) => {
+    if (!addExerciseId || !addPts) return;
+    const pts = parseInt(addPts, 10);
+    if (isNaN(pts) || pts < 0) return;
+
+    try {
+      const newSet = await addSet(workoutId, addExerciseId, pts);
+      const ex = exercises.find((e) => e.id === addExerciseId);
+      const setWithDetails: SetWithDetails = {
+        ...newSet,
+        exercise_name: ex?.name ?? "Unknown",
+        body_area_name: ex?.body_area_name ?? "Unknown",
+      };
+      setLogs((prev) =>
+        prev.map((w) =>
+          w.id === workoutId ? { ...w, sets: [...w.sets, setWithDetails] } : w
+        )
+      );
+      setAddPts("");
+    } catch {
+      // no-op
+    }
+  };
+
+  const handleDeleteWorkout = async (workoutId: number) => {
+    if (!window.confirm("Delete this workout? This cannot be undone.")) return;
+    try {
+      await deleteWorkout(workoutId);
+      setLogs((prev) => prev.filter((w) => w.id !== workoutId));
+      setEditingId(null);
+    } catch {
+      // no-op
+    }
   };
 
   if (error) return <div className="error">{error}</div>;
@@ -88,6 +224,7 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
         {logs.map((log) => {
           const areas = groupSetsByArea(log);
           const isExpanded = expanded.has(log.id);
+          const isEditing = editingId === log.id;
           const totalPts = areas.reduce((sum, a) => sum + a.totalPts, 0);
           return (
             <div key={log.id} className="history-item">
@@ -96,7 +233,7 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                 onClick={() => toggleExpand(log.id)}
               >
                 <span className="history-date">
-                  {formatDate(log.workout_date)}
+                  {formatRelativeDate(log.workout_date)}
                 </span>
                 <span className="history-areas">
                   {areas.map((a) => a.area).join(", ")}
@@ -108,8 +245,18 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                   {isExpanded ? "\u25BC" : "\u25B6"}
                 </span>
               </button>
-              {isExpanded && (
+              {isExpanded && !isEditing && (
                 <div className="history-details">
+                  <div className="history-full-date">
+                    <small>{formatDate(log.workout_date)}</small>
+                    <button
+                      className="btn-small"
+                      style={{ marginLeft: "0.5rem" }}
+                      onClick={() => enterEdit(log.id)}
+                    >
+                      Edit
+                    </button>
+                  </div>
                   {areas.map((a) => (
                     <div key={a.area} className="history-area-group">
                       <div className="history-area-header">
@@ -123,6 +270,109 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+              {isExpanded && isEditing && (
+                <div className="history-details">
+                  {/* Date edit */}
+                  <div className="history-edit-date">
+                    <label>Date:</label>
+                    <input
+                      type="date"
+                      className="date-input"
+                      value={log.workout_date}
+                      onChange={(e) => handleDateChange(log.id, e.target.value)}
+                    />
+                  </div>
+
+                  {/* Sets by area */}
+                  {groupSetsForEdit(log.sets).map((group) => (
+                    <div key={group.area} className="history-area-group">
+                      <div className="history-area-header">
+                        <span>{group.area}</span>
+                      </div>
+                      {group.sets.map((s) => (
+                        <div key={s.id} className="history-edit-set">
+                          <span className="history-edit-set-name">
+                            {s.exercise_name}
+                          </span>
+                          <input
+                            type="number"
+                            className="history-edit-set-pts"
+                            defaultValue={s.pts}
+                            min={0}
+                            onBlur={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              if (!isNaN(val) && val >= 0 && val !== s.pts) {
+                                handleUpdateSet(log.id, s.id, val);
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                (e.target as HTMLInputElement).blur();
+                              }
+                            }}
+                          />
+                          <span className="history-edit-set-unit">pts</span>
+                          <button
+                            className="set-badge-remove"
+                            onClick={() => handleRemoveSet(log.id, s.id)}
+                            title="Remove set"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+
+                  {/* Add set */}
+                  {exercises.length > 0 && (
+                    <div className="history-add-set">
+                      <select
+                        value={addExerciseId ?? ""}
+                        onChange={(e) => setAddExerciseId(e.target.value ? Number(e.target.value) : null)}
+                      >
+                        <option value="">Add exercise…</option>
+                        {exercises.map((ex) => (
+                          <option key={ex.id} value={ex.id}>
+                            {ex.name} ({ex.body_area_name})
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        className="history-add-set-pts"
+                        placeholder="pts"
+                        min={0}
+                        value={addPts}
+                        onChange={(e) => setAddPts(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleAddSet(log.id);
+                        }}
+                      />
+                      <button
+                        className="btn-small"
+                        disabled={!addExerciseId || !addPts}
+                        onClick={() => handleAddSet(log.id)}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="history-edit-actions">
+                    <button
+                      className="btn-abort"
+                      onClick={() => handleDeleteWorkout(log.id)}
+                    >
+                      Delete Workout
+                    </button>
+                    <button className="btn-primary" onClick={exitEdit}>
+                      Done
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

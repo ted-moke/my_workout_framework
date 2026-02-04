@@ -131,6 +131,20 @@ export function fetchActiveWorkout(
   );
 }
 
+export function updateWorkoutDate(workoutId: number, workoutDate: string): Promise<Workout> {
+  return fetch(`${BASE}/workouts/${workoutId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ workoutDate }),
+  }).then((r) => json<Workout>(r));
+}
+
+export function deleteWorkout(workoutId: number): Promise<void> {
+  return fetch(`${BASE}/workouts/${workoutId}`, { method: "DELETE" }).then((r) => {
+    if (!r.ok) throw new Error("Failed to delete workout");
+  });
+}
+
 export function fetchHistory(userId: number): Promise<WorkoutWithSets[]> {
   return fetch(`${BASE}/users/${userId}/history`).then((r) =>
     json<WorkoutWithSets[]>(r)

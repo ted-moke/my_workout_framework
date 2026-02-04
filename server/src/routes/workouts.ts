@@ -113,6 +113,54 @@ router.get("/api/users/:userId/workouts/active", async (req: Request, res: Respo
   }
 });
 
+// PUT /api/workouts/:id - Update workout date (finished workouts only)
+router.put("/api/workouts/:id", async (req: Request, res: Response) => {
+  const workoutId = parseInt(String(req.params.id), 10);
+  const { workoutDate } = req.body as { workoutDate?: string };
+
+  if (!workoutDate) {
+    res.status(400).json({ error: "workoutDate is required" });
+    return;
+  }
+
+  try {
+    const result = await pool.query<DbWorkout>(
+      `UPDATE workouts SET workout_date = $1
+       WHERE id = $2 AND finished = true
+       RETURNING *`,
+      [workoutDate, workoutId]
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: "Finished workout not found" });
+      return;
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error updating workout:", err);
+    res.status(500).json({ error: "Failed to update workout" });
+  }
+});
+
+// DELETE /api/workouts/:id - Delete a finished workout
+router.delete("/api/workouts/:id", async (req: Request, res: Response) => {
+  const workoutId = parseInt(String(req.params.id), 10);
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM workouts WHERE id = $1 AND finished = true RETURNING id",
+      [workoutId]
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: "Finished workout not found" });
+      return;
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Error deleting workout:", err);
+    res.status(500).json({ error: "Failed to delete workout" });
+  }
+});
+
 // GET /api/users/:userId/history - Recent finished workouts with sets
 router.get("/api/users/:userId/history", async (req: Request, res: Response) => {
   const userId = parseInt(String(req.params.userId), 10);
@@ -121,7 +169,7 @@ router.get("/api/users/:userId/history", async (req: Request, res: Response) => 
     const workoutsResult = await pool.query<DbWorkout>(
       `SELECT * FROM workouts
        WHERE user_id = $1 AND finished = true
-       ORDER BY completed_at DESC
+       ORDER BY workout_date DESC
        LIMIT 30`,
       [userId]
     );
