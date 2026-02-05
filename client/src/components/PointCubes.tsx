@@ -5,15 +5,16 @@ interface Props {
   goal: number;
   color: string;
   unit?: number;
+  size? : "small" | "large";
 }
 
-export default function PointCubes({ fulfilled, goal, color, unit = 1 }: Props) {
+export default function PointCubes({ fulfilled, goal, color, unit = 1, size = "large" }: Props) {
   const filledCubes = Math.floor(Math.min(fulfilled, goal) / unit);
   const remainingCubes = Math.ceil(Math.max(goal - fulfilled, 0) / unit);
   const bonusCubes = Math.floor(Math.max(fulfilled - goal, 0) / unit);
 
   return (
-    <div className={styles.grid}>
+    <div className={styles.grid} data-size={size}>
       {Array.from({ length: filledCubes }, (_, i) => (
         <span key={`f-${i}`} className={styles.filled} style={{ background: color }} />
       ))}

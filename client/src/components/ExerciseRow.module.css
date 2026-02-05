@@ -15,11 +15,11 @@
 
 .exerciseName {
   flex: 1;
-  font-size: 0.9rem;
+  font-size: var(--font-lg);
 }
 
 .exerciseTotal {
-  font-size: 0.75rem;
+  font-size: var(--font-sm);
   color: var(--color-accent);
 }
 

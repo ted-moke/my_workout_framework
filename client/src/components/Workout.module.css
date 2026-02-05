@@ -9,7 +9,7 @@
 
 .saveHint {
   color: var(--color-success-light);
-  font-size: 0.8rem;
+  font-size: var(--font-md);
   margin-bottom: 0.75rem;
 }
 
@@ -30,7 +30,7 @@
 }
 
 .selectorLabel {
-  font-size: 0.8rem;
+  font-size: var(--font-md);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
