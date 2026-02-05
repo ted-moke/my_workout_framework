@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchSuggestions, fetchHistory } from "../api";
 import { useUser } from "../UserContext";
 import type { FocusAreaSuggestion, WorkoutWithSets } from "../types";
-import ExtendedBar from "./ExtendedBar";
+import PointCubes from "./PointCubes";
 import styles from "./Home.module.css";
 
 const AREA_PALETTE_SIZE = 12;
@@ -56,14 +56,6 @@ function currentStreak(logs: WorkoutWithSets[]): number {
   return streak;
 }
 
-function dueLabel(s: FocusAreaSuggestion): string {
-  if (s.daysSinceLast === null) return "never done";
-  const diff = s.daysSinceLast - s.focusArea.periodLengthDays;
-  if (diff > 0) return `${Math.round(diff)}d overdue`;
-  if (diff === 0) return "due today";
-  return `due in ${Math.round(Math.abs(diff))}d`;
-}
-
 export default function Home({
   onStartWorkout,
   refreshKey,
@@ -93,13 +85,9 @@ export default function Home({
 
   const hasWorkouts = history.length > 0;
   const lastLog = hasWorkouts ? history[0] : null;
-  const progressAreas = suggestions
-    .filter((s) => s.fulfillmentFraction > 0)
-    .sort((a, b) => b.fulfillmentFraction - a.fulfillmentFraction);
-  const dueAreas = suggestions.filter(
-    (s) => s.fulfillmentFraction < 1 && s.priority > 0
+  const allAreas = [...suggestions].sort(
+    (a, b) => b.fulfillmentFraction - a.fulfillmentFraction
   );
-  const hasProgress = progressAreas.length > 0;
 
   return (
     <div className={styles.home}>
@@ -140,70 +128,27 @@ export default function Home({
       )}
 
       {suggestions.length > 0 ? (
-        <>
-          {hasProgress && (
-            <div className="card">
-              <h2>Progress</h2>
-              <div className={styles.dueList}>
-                {progressAreas.map((s) => {
-                  const areaColor = areaColorVar(s.focusArea.bodyArea.name);
-                  return (
-                    <div key={s.focusArea.id} className={styles.dueItem}>
-                      <div className={styles.dueItemHeader}>
-                        <span className={styles.dueAreaName} style={{ color: areaColor }}>
-                          {s.focusArea.bodyArea.name}
-                        </span>
-                        <span className="due-pts">
-                          {s.ptsFulfilled} / {s.focusArea.ptsPerPeriod}{" "}
-                          {s.focusArea.ptsType === "active_minutes" ? "min" : "pts"}
-                        </span>
-                      </div>
-                      <ExtendedBar fraction={s.fulfillmentFraction} color={areaColor} />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <div className="card">
-            <h2>What's Due</h2>
-            {dueAreas.length > 0 ? (
-              <div className={styles.dueList}>
-                {dueAreas.slice(0, 6).map((s) => {
-                  const pct = Math.min(
-                    100,
-                    Math.round(s.fulfillmentFraction * 100)
-                  );
-                  return (
-                    <div key={s.focusArea.id} className={styles.dueItem}>
-                      <div className={styles.dueItemHeader}>
-                        <span className={styles.dueAreaName} style={{ color: areaColorVar(s.focusArea.bodyArea.name) }}>
-                          {s.focusArea.bodyArea.name}
-                        </span>
-                        <span className="due-label overdue-label">
-                          {dueLabel(s)}
-                        </span>
-                      </div>
-                      <div className="progress-bar">
-                        <div
-                          className="progress-fill"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                      <span className="due-pts">
-                        {s.ptsFulfilled} / {s.focusArea.ptsPerPeriod}{" "}
-                        {s.focusArea.ptsType === "active_minutes" ? "min" : "pts"}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="muted">All caught up! Nice work.</p>
-            )}
+        <div className="card">
+          <h2>Progress</h2>
+          <div className={styles.progressList}>
+            {allAreas.map((s) => {
+              const areaColor = areaColorVar(s.focusArea.bodyArea.name);
+              return (
+                <div key={s.focusArea.id} className={styles.progressRow}>
+                  <span className={styles.progressLabel} style={{ color: areaColor }}>
+                    {s.focusArea.bodyArea.name}
+                  </span>
+                  <PointCubes
+                    fulfilled={s.ptsFulfilled}
+                    goal={s.focusArea.ptsPerPeriod}
+                    color={areaColor}
+                    unit={s.focusArea.ptsType === "active_minutes" ? 15 : 1}
+                  />
+                </div>
+              );
+            })}
           </div>
-        </>
+        </div>
       ) : (
         <div className="card">
           <h2>No Active Plan</h2>
