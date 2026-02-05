@@ -84,14 +84,14 @@ export default function Home({
   if (loading) return <div className="loading">Loading...</div>;
 
   const hasWorkouts = history.length > 0;
-  const lastLog = hasWorkouts ? history[0] : null;
+  // const lastLog = hasWorkouts ? history[0] : null;
   const allAreas = [...suggestions].sort(
-    (a, b) => b.fulfillmentFraction - a.fulfillmentFraction
+    (a, b) => (b.focusArea.ptsPerPeriod - b.ptsFulfilled) - (a.focusArea.ptsPerPeriod - a.ptsFulfilled)
   );
 
   return (
     <div className={styles.home}>
-      {hasWorkouts && lastLog ? (
+      {/* {hasWorkouts && lastLog ? (
         <div className="card">
           <h2>Recent Activity</h2>
           <div className={styles.statsGrid}>
@@ -125,7 +125,7 @@ export default function Home({
             No workouts logged yet. Start your first one!
           </p>
         </div>
-      )}
+      )} */}
 
       {suggestions.length > 0 ? (
         <div className="card">

@@ -1,40 +1,46 @@
+
+
 .grid {
   display: flex;
   flex-wrap: wrap;
   gap: 3px;
+
+
+  --cube-large-size: 14px;
+  --cube-small-size: 10px;
 }
 
 .filled {
-  width: 16px;
-  height: 16px;
+  width: var(--cube-large-size);
+  height: var(--cube-large-size);
   border-radius: 2px;
 }
 
 .grid[data-size='small'] .filled,
 .grid[data-size='small'] .remaining,
 .grid[data-size='small'] .over {
-  width: 10px;
-  height: 10px;
+  width: var(--cube-small-size);
+  height: var(--cube-small-size)  ;
 }
 
 .grid[data-size='small'] .over::before {
-  height: 10px;
+  height: var(--cube-small-size);
 }
 .grid[data-size='small'] .over::after {
-  width: 10px;
+  width: var(--cube-small-size);
 }
 
 .remaining {
-  width: 16px;
-  height: 16px;
+  width: var(--cube-large-size);
+  height: var(--cube-large-size);
   border-radius: 2px;
   border: 1.5px solid;
   box-sizing: border-box;
 }
 
 .over {
-  width: 16px;
-  height: 16px;
+  width: var(--cube-large-size);
+  height: var(--cube-large-size);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -46,7 +52,7 @@
 .over::before {
   content: '';
   position: absolute;
-  height: 16px;
+  height: var(--cube-large-size);
   width: 2px;
   background: currentColor;
 }
@@ -54,7 +60,7 @@
 .over::after {
   content: '';
   position: absolute;
-  width: 16px;
+  width: var(--cube-large-size);
   height: 2px;
   background: currentColor;
 }
