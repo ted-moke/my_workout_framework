@@ -14,14 +14,6 @@ interface Props {
   onRemoveSet: (setId: number) => void;
 }
 
-function dueLabel(s: FocusAreaSuggestion): string {
-  if (s.daysSinceLast === null) return "never done";
-  const diff = s.daysSinceLast - s.focusArea.periodLengthDays;
-  if (diff > 0) return `${Math.round(diff)}d overdue`;
-  if (diff === 0) return "due today";
-  return `due in ${Math.round(Math.abs(diff))}d`;
-}
-
 export default function FocusAreaCard({
   suggestion,
   sets,
@@ -31,9 +23,7 @@ export default function FocusAreaCard({
   onRemoveSet,
 }: Props) {
   const [open, setOpen] = useState(defaultOpen);
-  const { focusArea, ptsFulfilled, priority } = suggestion;
-  const pct = Math.min(100, Math.round((ptsFulfilled / focusArea.ptsPerPeriod) * 100));
-  const isDue = priority > 0;
+  const { focusArea } = suggestion;
 
   // Count sets in this body area for the current workout
   const areaSets = sets.filter(
@@ -46,27 +36,12 @@ export default function FocusAreaCard({
       <button className={styles.focusAreaHeader} onClick={() => setOpen(!open)}>
         <span className="group-arrow">{open ? <FiChevronDown /> : <FiChevronRight />}</span>
         <span className={styles.focusAreaName} style={{ color: areaColorVar(focusArea.bodyArea.name) }}>{focusArea.bodyArea.name}</span>
-        <span className={`due-label${isDue ? " overdue-label" : " on-track-label"}`}>
-          {dueLabel(suggestion)}
-        </span>
         {areaSets.length > 0 && (
           <span className="group-badge">{areaSets.length}</span>
         )}
       </button>
       {open && (
         <>
-          <div className={styles.focusAreaProgress}>
-            <div className="progress-bar">
-              <div
-                className={`progress-fill${pct >= 100 ? " complete" : ""}`}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <span className="due-pts">
-              {ptsFulfilled} / {focusArea.ptsPerPeriod}{" "}
-              {focusArea.ptsType === "active_minutes" ? "min" : "pts"}
-            </span>
-          </div>
           <div className={styles.focusAreaExercises}>
             {suggestion.exercises.map((ex) => (
               <ExerciseRow

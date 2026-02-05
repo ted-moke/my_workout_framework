@@ -10,7 +10,9 @@ import {
 } from "../api";
 import { useUser } from "../UserContext";
 import type { FocusAreaSuggestion, SetWithDetails, Workout as WorkoutType } from "../types";
+import { areaColorVar } from "../areaColor";
 import FocusAreaCard from "./FocusAreaCard";
+import PointCubes from "./PointCubes";
 import styles from "./Workout.module.css";
 
 function todayStr(): string {
@@ -169,10 +171,30 @@ export default function Workout({
           {isActive && <span className="active-badge">LIVE</span>}
         </div>
 
-        {isActive && (
-          <p className={styles.saveHint}>
-            Sets are saved as you add them.
-          </p>
+        {isActive && sets.length > 0 && (
+          <div className={styles.workoutProgress}>
+            {suggestions
+              .filter((s) => sets.some((set) => s.exercises.some((e) => e.id === set.exercise_id)))
+              .map((s) => {
+                const areaColor = areaColorVar(s.focusArea.bodyArea.name);
+                const areaPts = sets
+                  .filter((set) => s.exercises.some((e) => e.id === set.exercise_id))
+                  .reduce((sum, set) => sum + set.pts, 0);
+                return (
+                  <div key={s.focusArea.id} className={styles.workoutProgressRow}>
+                    <span className={styles.workoutProgressLabel} style={{ color: areaColor }}>
+                      {s.focusArea.bodyArea.name}
+                    </span>
+                    <PointCubes
+                      fulfilled={areaPts}
+                      goal={areaPts}
+                      color={areaColor}
+                      unit={s.focusArea.ptsType === "active_minutes" ? 15 : 1}
+                    />
+                  </div>
+                );
+              })}
+          </div>
         )}
 
         <div className={styles.exerciseList}>
