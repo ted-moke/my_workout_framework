@@ -8,16 +8,10 @@ import {
   deleteExercise,
 } from "../api";
 import type { BodyArea, Exercise } from "../types";
+import { areaColorVar } from "../areaColor";
 import styles from "./Exercises.module.css";
 
 type ExerciseWithArea = Exercise & { body_area_name: string };
-
-const AREA_PALETTE_SIZE = 12;
-function areaColorVar(name: string): string {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0;
-  return `var(--area-color-${Math.abs(h) % AREA_PALETTE_SIZE})`;
-}
 
 export default function Exercises() {
   const [exercises, setExercises] = useState<ExerciseWithArea[]>([]);

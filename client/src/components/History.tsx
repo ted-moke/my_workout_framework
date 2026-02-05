@@ -3,6 +3,7 @@ import { FiEdit2, FiTrash2, FiX, FiCheck, FiPlus, FiChevronDown, FiChevronRight 
 import {
   fetchHistory,
   fetchExercises,
+  fetchSuggestions,
   updateWorkoutDate,
   updateSet,
   removeSet,
@@ -10,15 +11,10 @@ import {
   deleteWorkout,
 } from "../api";
 import { useUser } from "../UserContext";
-import type { WorkoutWithSets, SetWithDetails, Exercise } from "../types";
+import type { WorkoutWithSets, SetWithDetails, Exercise, PtsType } from "../types";
+import PointCubes from "./PointCubes";
+import { areaColorVar } from "../areaColor";
 import styles from "./History.module.css";
-
-const AREA_PALETTE_SIZE = 12;
-function areaColorVar(name: string): string {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0;
-  return `var(--area-color-${Math.abs(h) % AREA_PALETTE_SIZE})`;
-}
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -106,12 +102,22 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
   const [addExerciseId, setAddExerciseId] = useState<number | null>(null);
   const [addPts, setAddPts] = useState("");
   const [error, setError] = useState("");
+  const [ptsTypeByArea, setPtsTypeByArea] = useState<Map<string, PtsType>>(new Map());
 
   useEffect(() => {
     if (!user) return;
     fetchHistory(user.id)
       .then(setLogs)
       .catch(() => setError("Failed to load history"));
+    fetchSuggestions(user.id)
+      .then((data) => {
+        const map = new Map<string, PtsType>();
+        for (const s of data.suggestions) {
+          map.set(s.focusArea.bodyArea.name, s.focusArea.ptsType);
+        }
+        setPtsTypeByArea(map);
+      })
+      .catch(() => {});
   }, [user, refreshKey]);
 
   const toggleExpand = (id: number) => {
@@ -242,7 +248,6 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
           const areas = groupSetsByArea(log);
           const isExpanded = expanded.has(log.id);
           const isEditing = editingId === log.id;
-          const totalPts = areas.reduce((sum, a) => sum + a.totalPts, 0);
           return (
             <div key={log.id} className={styles.historyItem}>
               <button
@@ -253,14 +258,15 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                   {formatRelativeDate(log.workout_date)}
                 </span>
                 <span className={styles.historyAreas}>
-                  {areas.map((a, i) => (
-                    <span key={a.area} style={{ color: areaColorVar(a.area) }}>
-                      {i > 0 ? ", " : ""}{a.area}
-                    </span>
+                  {areas.map((a) => (
+                    <PointCubes
+                      key={a.area}
+                      fulfilled={a.totalPts}
+                      goal={a.totalPts}
+                      color={areaColorVar(a.area)}
+                      unit={ptsTypeByArea.get(a.area) === "active_minutes" ? 15 : 1}
+                    />
                   ))}
-                </span>
-                <span className={styles.historyTotalPts}>
-                  {totalPts} pts
                 </span>
                 <span className="group-arrow">
                   {isExpanded ? <FiChevronDown /> : <FiChevronRight />}

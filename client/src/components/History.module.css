@@ -41,13 +41,9 @@
 
 .historyAreas {
   flex: 1;
-  color: var(--text-muted);
-  font-size: var(--font-md);
-}
-
-.historyTotalPts {
-  color: var(--color-accent);
-  font-size: var(--font-md);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .historyDetails {

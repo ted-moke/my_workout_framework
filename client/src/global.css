@@ -48,19 +48,19 @@
   --radius-pill: 9999px;
   --radius-progress: 3px;
 
-  /* Focus-area color palette */
-  --area-color-0: #e06c75;
-  --area-color-1: #61afef;
-  --area-color-2: #98c379;
-  --area-color-3: #c678dd;
-  --area-color-4: #e5c07b;
-  --area-color-5: #56b6c2;
-  --area-color-6: #d19a66;
-  --area-color-7: #be5046;
-  --area-color-8: #7ec8e3;
-  --area-color-9: #c3e88d;
-  --area-color-10: #f78c6c;
-  --area-color-11: #e993cf;
+  /* Focus-area color palette (jewel tones, high contrast) */
+  --area-color-0: #2e8b57;  /* emerald */
+  --area-color-1: #4169e1;  /* sapphire */
+  --area-color-2: #daa520;  /* gold */
+  --area-color-3: #dc143c;  /* crimson */
+  --area-color-4: #20b2aa;  /* teal */
+  --area-color-5: #9932cc;  /* orchid purple */
+  --area-color-6: #ff8c00;  /* tangerine */
+  --area-color-7: #32cd32;  /* lime */
+  --area-color-8: #1e90ff;  /* azure */
+  --area-color-9: #ff69b4;  /* pink */
+  --area-color-10: #8b4513; /* amber brown */
+  --area-color-11: #00ced1; /* turquoise */
 
   /* Text sizes */
   --font-2xs: 0.65rem;

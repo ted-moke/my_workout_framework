@@ -2,14 +2,8 @@ import { useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 import type { FocusAreaSuggestion, SetWithDetails } from "../types";
 import ExerciseRow from "./ExerciseRow";
+import { areaColorVar } from "../areaColor";
 import styles from "./FocusAreaCard.module.css";
-
-const AREA_PALETTE_SIZE = 12;
-function areaColorVar(name: string): string {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0;
-  return `var(--area-color-${Math.abs(h) % AREA_PALETTE_SIZE})`;
-}
 
 interface Props {
   suggestion: FocusAreaSuggestion;

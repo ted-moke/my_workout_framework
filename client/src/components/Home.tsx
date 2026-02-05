@@ -2,15 +2,9 @@ import { useEffect, useState } from "react";
 import { fetchSuggestions, fetchHistory } from "../api";
 import { useUser } from "../UserContext";
 import type { FocusAreaSuggestion, WorkoutWithSets } from "../types";
+import { areaColorVar } from "../areaColor";
 import PointCubes from "./PointCubes";
 import styles from "./Home.module.css";
-
-const AREA_PALETTE_SIZE = 12;
-function areaColorVar(name: string): string {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0;
-  return `var(--area-color-${Math.abs(h) % AREA_PALETTE_SIZE})`;
-}
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -83,7 +77,7 @@ export default function Home({
   if (error) return <div className="error">{error}</div>;
   if (loading) return <div className="loading">Loading...</div>;
 
-  const hasWorkouts = history.length > 0;
+  // const hasWorkouts = history.length > 0;
   // const lastLog = hasWorkouts ? history[0] : null;
   const allAreas = [...suggestions].sort(
     (a, b) => (b.focusArea.ptsPerPeriod - b.ptsFulfilled) - (a.focusArea.ptsPerPeriod - a.ptsFulfilled)
