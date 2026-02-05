@@ -1,3 +1,4 @@
+import { FiX } from "react-icons/fi";
 import type { PtsType } from "../types";
 
 interface Props {
@@ -19,7 +20,7 @@ export default function SetBadge({ pts, ptsType, onRemove, disabled }: Props) {
         disabled={disabled}
         title="Remove set"
       >
-        x
+        <FiX />
       </button>
     </span>
   );

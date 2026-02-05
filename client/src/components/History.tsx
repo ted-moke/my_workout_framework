@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FiEdit2, FiTrash2, FiX, FiCheck, FiPlus, FiChevronDown, FiChevronRight } from "react-icons/fi";
 import {
   fetchHistory,
   fetchExercises,
@@ -12,6 +13,13 @@ import { useUser } from "../UserContext";
 import type { WorkoutWithSets, SetWithDetails, Exercise } from "../types";
 import styles from "./History.module.css";
 
+const AREA_PALETTE_SIZE = 12;
+function areaColorVar(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0;
+  return `var(--area-color-${Math.abs(h) % AREA_PALETTE_SIZE})`;
+}
+
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   return d.toLocaleDateString(undefined, {
@@ -24,6 +32,8 @@ function formatDate(dateStr: string): string {
 function formatRelativeDate(dateStr: string): string {
   const date = new Date(dateStr);
   const now = new Date();
+
+  console.log('formatRelativeDate', dateStr, date, now);
   const diffTime = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
@@ -139,10 +149,16 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
       setLogs((prev) =>
         prev.map((w) => (w.id === workoutId ? { ...w, workout_date: updated.workout_date } : w))
       );
+      console.log("Date updated");
     } catch {
       // revert not needed since input is controlled by logs state
     }
   };
+
+  useEffect(() => {
+
+    console.log('logs updated', logs);
+  }, [logs]);
 
   const handleUpdateSet = async (workoutId: number, setId: number, newPts: number) => {
     try {
@@ -237,31 +253,44 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                   {formatRelativeDate(log.workout_date)}
                 </span>
                 <span className={styles.historyAreas}>
-                  {areas.map((a) => a.area).join(", ")}
+                  {areas.map((a, i) => (
+                    <span key={a.area} style={{ color: areaColorVar(a.area) }}>
+                      {i > 0 ? ", " : ""}{a.area}
+                    </span>
+                  ))}
                 </span>
                 <span className={styles.historyTotalPts}>
                   {totalPts} pts
                 </span>
                 <span className="group-arrow">
-                  {isExpanded ? "\u25BC" : "\u25B6"}
+                  {isExpanded ? <FiChevronDown /> : <FiChevronRight />}
                 </span>
               </button>
               {isExpanded && !isEditing && (
                 <div className={styles.historyDetails}>
                   <div className={styles.historyFullDate}>
                     <small>{formatDate(log.workout_date)}</small>
-                    <button
-                      className="btn-small"
-                      style={{ marginLeft: "0.5rem" }}
-                      onClick={() => enterEdit(log.id)}
-                    >
-                      Edit
-                    </button>
+                    <div className={styles.historyDetailActions}>
+                      <button
+                        className={styles.iconBtn}
+                        onClick={() => enterEdit(log.id)}
+                        title="Edit"
+                      >
+                        <FiEdit2 />
+                      </button>
+                      <button
+                        className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                        onClick={() => handleDeleteWorkout(log.id)}
+                        title="Delete"
+                      >
+                        <FiTrash2 />
+                      </button>
+                    </div>
                   </div>
                   {areas.map((a) => (
                     <div key={a.area} className={styles.historyAreaGroup}>
                       <div className={styles.historyAreaHeader}>
-                        <span>{a.area}</span>
+                        <span style={{ color: areaColorVar(a.area) }}>{a.area}</span>
                         <span className={styles.historyAreaPts}>
                           {a.totalPts} pts
                         </span>
@@ -290,7 +319,7 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                   {groupSetsForEdit(log.sets).map((group) => (
                     <div key={group.area} className={styles.historyAreaGroup}>
                       <div className={styles.historyAreaHeader}>
-                        <span>{group.area}</span>
+                        <span style={{ color: areaColorVar(group.area) }}>{group.area}</span>
                       </div>
                       {group.sets.map((s) => (
                         <div key={s.id} className={styles.historyEditSet}>
@@ -320,7 +349,7 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                             onClick={() => handleRemoveSet(log.id, s.id)}
                             title="Remove set"
                           >
-                            ×
+                            <FiX />
                           </button>
                         </div>
                       ))}
@@ -357,7 +386,7 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                         disabled={!addExerciseId || !addPts}
                         onClick={() => handleAddSet(log.id)}
                       >
-                        Add
+                        <FiPlus />
                       </button>
                     </div>
                   )}
@@ -368,10 +397,10 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                       className="btn-abort"
                       onClick={() => handleDeleteWorkout(log.id)}
                     >
-                      Delete Workout
+                      <FiTrash2 /> Delete
                     </button>
                     <button className="btn-primary" onClick={exitEdit}>
-                      Done
+                      <FiCheck /> Done
                     </button>
                   </div>
                 </div>

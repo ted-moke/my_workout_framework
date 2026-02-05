@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiPlus } from "react-icons/fi";
 import {
   fetchExercises,
   fetchBodyAreas,
@@ -11,6 +11,13 @@ import type { BodyArea, Exercise } from "../types";
 import styles from "./Exercises.module.css";
 
 type ExerciseWithArea = Exercise & { body_area_name: string };
+
+const AREA_PALETTE_SIZE = 12;
+function areaColorVar(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0;
+  return `var(--area-color-${Math.abs(h) % AREA_PALETTE_SIZE})`;
+}
 
 export default function Exercises() {
   const [exercises, setExercises] = useState<ExerciseWithArea[]>([]);
@@ -139,14 +146,23 @@ export default function Exercises() {
   // List view
   return (
     <div className="card">
-      <h2>Exercises</h2>
+      <div className={styles.header}>
+        <h2>Exercises</h2>
+        <button
+          className={`${styles.iconBtn} ${styles.addBtn}`}
+          onClick={startNew}
+          title="Add exercise"
+        >
+          <FiPlus />
+        </button>
+      </div>
       {exercises.length === 0 ? (
-        <p className="muted">No exercises yet. Create one to get started.</p>
+        <p className="muted">No exercises yet. Tap + to create one.</p>
       ) : (
         <div className={styles.exerciseList}>
           {Object.entries(grouped).map(([areaName, exs]) => (
             <div key={areaName} className={styles.group}>
-              <div className={styles.groupLabel}>{areaName}</div>
+              <div className={styles.groupLabel} style={{ color: areaColorVar(areaName) }}>{areaName}</div>
               {exs.map((ex) => (
                 <div key={ex.id} className={styles.exerciseRow}>
                   <span className={styles.exerciseName}>{ex.name}</span>
@@ -174,9 +190,6 @@ export default function Exercises() {
           ))}
         </div>
       )}
-      <button className="btn-primary" onClick={startNew}>
-        Create Exercise
-      </button>
     </div>
   );
 }

@@ -79,6 +79,33 @@
 .historyFullDate {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+}
+
+.historyDetailActions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.iconBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  border-radius: var(--radius-sm);
+}
+
+.iconBtn:hover {
+  color: var(--color-primary);
+  background: var(--bg-surface);
+}
+
+.iconBtnDanger:hover {
+  color: var(--color-danger);
 }
 
 /* History edit mode */

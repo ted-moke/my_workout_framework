@@ -2,7 +2,15 @@ import { useEffect, useState } from "react";
 import { fetchSuggestions, fetchHistory } from "../api";
 import { useUser } from "../UserContext";
 import type { FocusAreaSuggestion, WorkoutWithSets } from "../types";
+import ExtendedBar from "./ExtendedBar";
 import styles from "./Home.module.css";
+
+const AREA_PALETTE_SIZE = 12;
+function areaColorVar(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0;
+  return `var(--area-color-${Math.abs(h) % AREA_PALETTE_SIZE})`;
+}
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -85,14 +93,13 @@ export default function Home({
 
   const hasWorkouts = history.length > 0;
   const lastLog = hasWorkouts ? history[0] : null;
-  const completedAreas = suggestions.filter((s) => s.fulfillmentFraction >= 1);
-  const partialAreas = suggestions.filter(
-    (s) => s.fulfillmentFraction > 0 && s.fulfillmentFraction < 1
-  );
+  const progressAreas = suggestions
+    .filter((s) => s.fulfillmentFraction > 0)
+    .sort((a, b) => b.fulfillmentFraction - a.fulfillmentFraction);
   const dueAreas = suggestions.filter(
     (s) => s.fulfillmentFraction < 1 && s.priority > 0
   );
-  const hasProgress = completedAreas.length > 0 || partialAreas.length > 0;
+  const hasProgress = progressAreas.length > 0;
 
   return (
     <div className={styles.home}>
@@ -138,43 +145,20 @@ export default function Home({
             <div className="card">
               <h2>Progress</h2>
               <div className={styles.dueList}>
-                {completedAreas.map((s) => (
-                  <div key={s.focusArea.id} className={styles.dueItem}>
-                    <div className={styles.dueItemHeader}>
-                      <span className={styles.dueAreaName}>
-                        {s.focusArea.bodyArea.name}
-                      </span>
-                      <span className="due-label on-track-label">done</span>
-                    </div>
-                    <div className="progress-bar">
-                      <div className="progress-fill complete" style={{ width: "100%" }} />
-                    </div>
-                    <span className="due-pts">
-                      {s.ptsFulfilled} / {s.focusArea.ptsPerPeriod}{" "}
-                      {s.focusArea.ptsType === "active_minutes" ? "min" : "pts"}
-                    </span>
-                  </div>
-                ))}
-                {partialAreas.map((s) => {
-                  const pct = Math.round(s.fulfillmentFraction * 100);
+                {progressAreas.map((s) => {
+                  const areaColor = areaColorVar(s.focusArea.bodyArea.name);
                   return (
                     <div key={s.focusArea.id} className={styles.dueItem}>
                       <div className={styles.dueItemHeader}>
-                        <span className={styles.dueAreaName}>
+                        <span className={styles.dueAreaName} style={{ color: areaColor }}>
                           {s.focusArea.bodyArea.name}
                         </span>
-                        <span className="due-label partial-label">{pct}%</span>
+                        <span className="due-pts">
+                          {s.ptsFulfilled} / {s.focusArea.ptsPerPeriod}{" "}
+                          {s.focusArea.ptsType === "active_minutes" ? "min" : "pts"}
+                        </span>
                       </div>
-                      <div className="progress-bar">
-                        <div
-                          className="progress-fill"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                      <span className="due-pts">
-                        {s.ptsFulfilled} / {s.focusArea.ptsPerPeriod}{" "}
-                        {s.focusArea.ptsType === "active_minutes" ? "min" : "pts"}
-                      </span>
+                      <ExtendedBar fraction={s.fulfillmentFraction} color={areaColor} />
                     </div>
                   );
                 })}
@@ -194,7 +178,7 @@ export default function Home({
                   return (
                     <div key={s.focusArea.id} className={styles.dueItem}>
                       <div className={styles.dueItemHeader}>
-                        <span className={styles.dueAreaName}>
+                        <span className={styles.dueAreaName} style={{ color: areaColorVar(s.focusArea.bodyArea.name) }}>
                           {s.focusArea.bodyArea.name}
                         </span>
                         <span className="due-label overdue-label">

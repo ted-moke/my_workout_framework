@@ -7,6 +7,7 @@ services:
       POSTGRES_USER: ${DB_USER:-workout}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-workout}
       POSTGRES_DB: ${DB_NAME:-workout_tracker}
+      TZ: America/New_York
     ports:
       - "5432:5432"
     volumes:
@@ -24,6 +25,7 @@ services:
     ports:
       - "7000:3001"
     environment:
+      - TZ=America/New_York
       - NODE_ENV=production
       - PORT=3001
       - DB_HOST=db

@@ -15,6 +15,7 @@
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:build": "docker-compose build",
+    "docker:rebuild": "npm run docker:down && npm run docker:build && npm run docker:up",
     "docker:logs": "docker-compose logs -f",
     "docker:seed": "docker-compose exec app node dist/seed.js",
     "pgadmin:start": "docker compose --profile tools up pgadmin -d",

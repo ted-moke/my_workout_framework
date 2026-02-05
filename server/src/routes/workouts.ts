@@ -22,7 +22,7 @@ router.post("/api/users/:userId/workouts/start", async (req: Request, res: Respo
 
     const result = await pool.query<DbWorkout>(
       "INSERT INTO workouts (user_id, workout_date) VALUES ($1, $2) RETURNING *",
-      [userId, workoutDate || new Date().toISOString().substring(0, 10)]
+      [userId, workoutDate || (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })()]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

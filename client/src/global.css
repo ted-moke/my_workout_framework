@@ -48,6 +48,20 @@
   --radius-pill: 9999px;
   --radius-progress: 3px;
 
+  /* Focus-area color palette */
+  --area-color-0: #e06c75;
+  --area-color-1: #61afef;
+  --area-color-2: #98c379;
+  --area-color-3: #c678dd;
+  --area-color-4: #e5c07b;
+  --area-color-5: #56b6c2;
+  --area-color-6: #d19a66;
+  --area-color-7: #be5046;
+  --area-color-8: #7ec8e3;
+  --area-color-9: #c3e88d;
+  --area-color-10: #f78c6c;
+  --area-color-11: #e993cf;
+
   /* Disabled state */
   --opacity-disabled: 0.5;
 }
@@ -100,6 +114,10 @@ body {
   cursor: pointer;
   width: 100%;
   transition: background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -121,6 +139,10 @@ body {
   cursor: pointer;
   width: 100%;
   transition: background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
 }
 
 .btn-finish:hover:not(:disabled) {
@@ -141,6 +163,10 @@ body {
   font-size: 0.9rem;
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
 }
 
 .btn-abort:hover:not(:disabled) {
@@ -212,7 +238,7 @@ body {
 }
 
 .progress-fill.complete {
-  background: var(--color-success);
+  background: var(--color-primary);
 }
 
 /* Due labels */
@@ -223,19 +249,11 @@ body {
   border-radius: var(--radius-sm);
 }
 
-.overdue-label {
-  color: var(--color-danger);
-  background: var(--color-danger-bg);
-}
-
-.on-track-label {
-  color: var(--color-success-light);
-  background: var(--color-success-bg);
-}
-
+.overdue-label,
+.on-track-label,
 .partial-label {
-  color: var(--color-warning);
-  background: var(--color-warning-bg);
+  color: var(--text-muted);
+  background: var(--bg-surface);
 }
 
 .due-pts {
@@ -277,9 +295,11 @@ body {
 }
 
 .group-arrow {
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   color: var(--text-faint);
   width: 0.75rem;
+  display: inline-flex;
+  align-items: center;
 }
 
 .group-badge {
@@ -319,6 +339,8 @@ body {
   font-size: 0.65rem;
   padding: 0 0.15rem;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
 }
 
 .set-badge-remove:hover {

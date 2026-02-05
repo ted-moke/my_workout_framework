@@ -5,10 +5,6 @@
   overflow: hidden;
 }
 
-.overdue {
-  border-color: var(--color-danger-border);
-}
-
 .focusAreaHeader {
   display: flex;
   align-items: center;

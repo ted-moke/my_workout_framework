@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { FiPlay, FiCheck, FiTrash2 } from "react-icons/fi";
 import {
   fetchSuggestions,
   startWorkout,
@@ -88,7 +89,7 @@ export default function Workout({
 
   const handleAbort = async () => {
     if (!activeWorkout) return;
-    if (!confirm("Abort this workout? All progress will be discarded.")) return;
+    if (!confirm("Abort this workout? All sets will be discarded.")) return;
     setBusy(true);
     setError("");
     try {
@@ -202,7 +203,7 @@ export default function Workout({
               />
             </div>
             <button className="btn-primary" onClick={handleStart} disabled={busy}>
-              {busy ? "Starting..." : "Start Workout"}
+              <FiPlay /> {busy ? "Starting..." : "Start Workout"}
             </button>
           </div>
         ) : (
@@ -212,10 +213,10 @@ export default function Workout({
               onClick={handleFinish}
               disabled={busy || sets.length === 0}
             >
-              {busy ? "Finishing..." : `Finish Workout (${sets.length} sets)`}
+              <FiCheck /> {busy ? "Finishing..." : `Finish (${sets.length} sets)`}
             </button>
             <button className="btn-abort" onClick={handleAbort} disabled={busy}>
-              Abort
+              <FiTrash2 /> Abort
             </button>
           </div>
         )}

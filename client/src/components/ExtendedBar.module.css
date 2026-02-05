@@ -1,0 +1,27 @@
+.wrap {
+  position: relative;
+  padding: 3px 0;
+}
+
+.bar {
+  display: flex;
+  height: 6px;
+  background: var(--border-primary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  transition: width 0.3s;
+}
+
+.goal {
+  position: absolute;
+  top: 0;
+  height: 12px;
+  width: 2px;
+  background: var(--text-faint);
+  border-radius: 1px;
+  transform: translateX(-50%);
+}
