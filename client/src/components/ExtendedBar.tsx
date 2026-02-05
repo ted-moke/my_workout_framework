@@ -6,36 +6,21 @@ interface Props {
 }
 
 export default function ExtendedBar({ fraction, color }: Props) {
-  const isOver = fraction > 1;
-  const scale = isOver ? fraction * 1.15 : 1;
-  const fillPct = (fraction / scale) * 100;
-  const goalPct = (1 / scale) * 100;
+  const basePct = Math.min(fraction, 1) * 100;
+  const overPct = Math.min(Math.max(fraction - 1, 0), 1) * 100;
 
   return (
-    <div className={styles.wrap}>
-      <div className={styles.bar}>
-        <div
-          className={styles.fill}
-          style={{
-            width: `${isOver ? goalPct : fillPct}%`,
-            background: color,
-          }}
-        />
-        {isOver && (
-          <div
-            className={styles.fill}
-            style={{
-              width: `${fillPct - goalPct}%`,
-              background: color,
-              opacity: 0.4,
-            }}
-          />
-        )}
-      </div>
+    <div className={styles.bar}>
       <div
-        className={styles.goal}
-        style={{ left: `${goalPct}%` }}
+        className={styles.base}
+        style={{ width: `${basePct}%`, background: color }}
       />
+      {overPct > 0 && (
+        <div
+          className={styles.over}
+          style={{ width: `${overPct}%`, background: color }}
+        />
+      )}
     </div>
   );
 }

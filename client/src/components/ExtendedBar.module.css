@@ -1,27 +1,32 @@
-.wrap {
-  position: relative;
-  padding: 3px 0;
-}
-
 .bar {
-  display: flex;
+  position: relative;
   height: 6px;
   background: var(--border-primary);
   border-radius: 3px;
   overflow: hidden;
 }
 
-.fill {
+.base {
   height: 100%;
   transition: width 0.3s;
 }
 
-.goal {
+/* .over {
   position: absolute;
   top: 0;
-  height: 12px;
-  width: 2px;
-  background: var(--text-faint);
-  border-radius: 1px;
-  transform: translateX(-50%);
+  left: 0;
+  height: 100%;
+  opacity: 0.3;
+  transition: width 0.3s;
+} */
+
+.over {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--bg-elevated);
+  border: 2px solid var(--border-input);
+  box-sizing: border-box;
+  transition: width 0.3s;
 }
