@@ -51,7 +51,7 @@ export async function getSuggestions(
        JOIN exercises e ON e.id = s.exercise_id
        WHERE w.user_id = $1
          AND w.finished = true
-         AND w.completed_at >= NOW() - ($2 || ' days')::interval
+         AND w.workout_date >= CURRENT_DATE - ($2 || ' days')::interval
          AND e.body_area_id = $3`,
       [userId, fa.period_length_days, fa.body_area_id]
     );
@@ -63,7 +63,7 @@ export async function getSuggestions(
 
   // 3. Get days since last workout per body area (all time)
   const lastDoneResult = await pool.query<LastDoneRow>(
-    `SELECT e.body_area_id, MAX(w.completed_at) as last_ever
+    `SELECT e.body_area_id, MAX(w.workout_date) as last_ever
      FROM sets s
      JOIN exercises e ON e.id = s.exercise_id
      JOIN workouts w ON w.id = s.workout_id
@@ -89,15 +89,17 @@ export async function getSuggestions(
   }
 
   // 5. Compute suggestions
-  const now = Date.now();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const suggestions: FocusAreaSuggestion[] = focusRows.map((fa) => {
     const ptsFulfilled = fulfillmentByArea.get(fa.id) ?? 0;
     const lastEver = lastDoneMap.get(fa.body_area_id);
 
     let daysSinceLast: number | null = null;
     if (lastEver) {
-      daysSinceLast = (now - new Date(lastEver).getTime()) / (1000 * 60 * 60 * 24);
-      daysSinceLast = Math.round(daysSinceLast * 10) / 10;
+      const lastDate = new Date(lastEver);
+      lastDate.setHours(0, 0, 0, 0);
+      daysSinceLast = Math.round((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
     }
 
     const fulfillmentFraction = ptsFulfilled / fa.pts_per_period;
