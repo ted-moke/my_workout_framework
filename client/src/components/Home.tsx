@@ -80,7 +80,32 @@ export default function Home({
   // const hasWorkouts = history.length > 0;
   // const lastLog = hasWorkouts ? history[0] : null;
   const allAreas = [...suggestions].sort(
-    (a, b) => (b.focusArea.ptsPerPeriod - b.ptsFulfilled) - (a.focusArea.ptsPerPeriod - a.ptsFulfilled)
+    (a, b) => {
+      if (b.daysSinceLast == null && a.daysSinceLast == null) {
+        return b.focusArea.ptsPerPeriod - a.focusArea.ptsPerPeriod
+      }
+
+      if (b.daysSinceLast === null) return 1;
+      if (a.daysSinceLast === null) return -1;
+
+      const bPointsDelta = b.focusArea.ptsPerPeriod - b.ptsFulfilled;
+      const aPointsDelta = a.focusArea.ptsPerPeriod - a.ptsFulfilled;
+
+      const bComplete = bPointsDelta <= 0;
+      const aComplete = aPointsDelta <= 0;
+
+      if (bComplete && aComplete) {
+        return bPointsDelta - aPointsDelta;
+      }
+      if (bComplete) return -1;
+      if (aComplete) return 1;
+
+      if (b.daysSinceLast > a.daysSinceLast) return 1;
+      if (b.daysSinceLast < a.daysSinceLast) return -1;
+
+      return bPointsDelta - aPointsDelta;
+
+    }
   );
 
   return (

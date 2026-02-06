@@ -1,6 +1,4 @@
 import type { Exercise, SetWithDetails, PtsType } from "../types";
-import SetBadge from "./SetBadge";
-import AddSetControl from "./AddSetControl";
 import styles from "./ExerciseRow.module.css";
 
 interface Props {
@@ -21,36 +19,37 @@ export default function ExerciseRow({
   onRemoveSet,
 }: Props) {
   const exerciseSets = sets.filter((s) => s.exercise_id === exercise.id);
-  const totalPts = exerciseSets.reduce((sum, s) => sum + s.pts, 0);
+
+  // For effort type, find which point values are currently selected
+  const selectedPts = new Set(exerciseSets.map((s) => s.pts));
+
+  const handleToggle = (pts: number) => {
+    // Find a set with this pts value to remove, or add a new one
+    const existingSet = exerciseSets.find((s) => s.pts === pts);
+    if (existingSet) {
+      onRemoveSet(existingSet.id);
+    } else {
+      onAddSet(exercise.id, pts);
+    }
+  };
+
+  const presets = ptsType === "active_minutes" ? [15, 30, 45, 60] : [1, 2, 3];
 
   return (
     <div className={styles.exerciseRow}>
-      <div className={styles.exerciseRowHeader}>
-        <span className={styles.exerciseName}>{exercise.name}</span>
-        {exerciseSets.length > 0 && (
-          <span className={styles.exerciseTotal}>
-            {totalPts} {ptsType === "active_minutes" ? "min" : "pts"}
-          </span>
-        )}
-      </div>
-      {exerciseSets.length > 0 && (
-        <div className={styles.exerciseSets}>
-          {exerciseSets.map((s) => (
-            <SetBadge
-              key={s.id}
-              pts={s.pts}
-              ptsType={ptsType}
-              onRemove={() => onRemoveSet(s.id)}
-              disabled={!isActive}
-            />
+      <span className={styles.exerciseName}>{exercise.name}</span>
+      {isActive && (
+        <div className={styles.exerciseButtons}>
+          {presets.map((p) => (
+            <button
+              key={p}
+              className={`${styles.ptsBtn}${selectedPts.has(p) ? ` ${styles.ptsBtnSelected}` : ""}`}
+              onClick={() => handleToggle(p)}
+            >
+              {ptsType === "active_minutes" ? `${p}m` : p}
+            </button>
           ))}
         </div>
-      )}
-      {isActive && (
-        <AddSetControl
-          ptsType={ptsType}
-          onAdd={(pts) => onAddSet(exercise.id, pts)}
-        />
       )}
     </div>
   );

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 import type { FocusAreaSuggestion, SetWithDetails } from "../types";
 import ExerciseRow from "./ExerciseRow";
+import PointCubes from "./PointCubes";
 import { areaColorVar } from "../areaColor";
 import styles from "./FocusAreaCard.module.css";
 
@@ -23,22 +24,29 @@ export default function FocusAreaCard({
   onRemoveSet,
 }: Props) {
   const [open, setOpen] = useState(defaultOpen);
-  const { focusArea } = suggestion;
+  const { focusArea, ptsFulfilled } = suggestion;
+  const areaColor = areaColorVar(focusArea.bodyArea.name);
 
-  // Count sets in this body area for the current workout
-  const areaSets = sets.filter(
-    (s) =>
-      suggestion.exercises.some((e) => e.id === s.exercise_id)
-  );
+  // Sum pts from current workout sets for this area
+  const workoutPts = sets
+    .filter((s) => suggestion.exercises.some((e) => e.id === s.exercise_id))
+    .reduce((sum, s) => sum + s.pts, 0);
+
+  const totalFulfilled = ptsFulfilled + workoutPts;
+  const unit = focusArea.ptsType === "active_minutes" ? 15 : 1;
 
   return (
     <div className={styles.focusAreaCard}>
       <button className={styles.focusAreaHeader} onClick={() => setOpen(!open)}>
         <span className="group-arrow">{open ? <FiChevronDown /> : <FiChevronRight />}</span>
-        <span className={styles.focusAreaName} style={{ color: areaColorVar(focusArea.bodyArea.name) }}>{focusArea.bodyArea.name}</span>
-        {areaSets.length > 0 && (
-          <span className="group-badge">{areaSets.length}</span>
-        )}
+        <span className={styles.focusAreaName} style={{ color: areaColor }}>{focusArea.bodyArea.name}</span>
+        <PointCubes
+          fulfilled={totalFulfilled}
+          goal={focusArea.ptsPerPeriod}
+          color={areaColor}
+          unit={unit}
+          newPts={workoutPts}
+        />
       </button>
       {open && (
         <>

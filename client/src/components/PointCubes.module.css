@@ -38,6 +38,37 @@
   box-sizing: border-box;
 }
 
+.new {
+  position: relative;
+  width: var(--cube-large-size);
+  height: var(--cube-large-size);
+  border-radius: 2px;
+  border: 1.5px solid;
+  box-sizing: border-box;
+}
+
+.new::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.grid[data-size='small'] .new {
+  width: var(--cube-small-size);
+  height: var(--cube-small-size);
+}
+
+.grid[data-size='small'] .new::after {
+  width: 4px;
+  height: 4px;
+}
+
 .over {
   width: var(--cube-large-size);
   height: var(--cube-large-size);

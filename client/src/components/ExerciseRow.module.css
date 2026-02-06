@@ -1,31 +1,49 @@
 .exerciseRow {
-  padding: 0.4rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
 }
 
 .exerciseRow + .exerciseRow {
   border-top: 1px solid var(--border-subtle);
 }
 
-.exerciseRowHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.25rem;
-}
-
 .exerciseName {
-  flex: 1;
   font-size: var(--font-lg);
+  flex: 1;
 }
 
-.exerciseTotal {
-  font-size: var(--font-sm);
-  color: var(--color-accent);
-}
-
-.exerciseSets {
+.exerciseButtons {
   display: flex;
-  flex-wrap: wrap;
   gap: 0.25rem;
-  margin-bottom: 0.25rem;
+}
+
+.ptsBtn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--bg-elevated-hover);
+  color: var(--text-tertiary);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.5rem;
+  font-size: var(--font-sm);
+  cursor: pointer;
+  min-width: 2rem;
+  text-align: center;
+}
+
+.ptsBtn:hover {
+  background: var(--bg-elevated-hover);
+  border-color: var(--border-input-hover);
+}
+
+.ptsBtnSelected {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--text-primary);
+}
+
+.ptsBtnSelected:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
