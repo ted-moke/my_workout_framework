@@ -13,9 +13,9 @@
 .dayGap {
   display: flex;
   align-items: center;
-  justify-content: center;
+  /* justify-content: center; */
   gap: 0.25rem;
-  padding: 0.25rem 0 0.5rem 0;
+  padding: 0.25rem 0 0.5rem 3.75rem;
 }
 
 .dayGapDot {
@@ -34,7 +34,7 @@
 .historyHeader {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   font-size: var(--font-lg);
   width: 100%;
   background: none;
@@ -51,8 +51,10 @@
 
 .historyDate {
   font-weight: 600;
-  color: var(--text-primary);
-  min-width: 5rem;
+  color: var(--text-tertiary);
+  width: 6.5rem;
+  flex-shrink: 0;
+  text-align: right;
 }
 
 .historyAreas {
