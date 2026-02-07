@@ -154,6 +154,8 @@ export default function Home({
         </button>
       </div>
 
+      <History refreshKey={refreshKey} />
+
       {suggestions.length > 0 ? (
         <div className="card">
           <h2>Progress</h2>
@@ -184,8 +186,6 @@ export default function Home({
           </p>
         </div>
       )}
-
-      <History refreshKey={refreshKey} />
 
     </div>
   );

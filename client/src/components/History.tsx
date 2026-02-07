@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import {
   FiEdit2,
   FiTrash2,
   FiX,
   FiCheck,
-  FiPlus,
-  FiChevronDown,
-  FiChevronRight
+  FiPlus
 } from 'react-icons/fi'
 import {
   fetchHistory,
@@ -25,7 +23,6 @@ import type {
   Exercise,
   PtsType
 } from '../types'
-import PointCubes from './PointCubes'
 import { areaColorVar } from '../areaColor'
 import styles from './History.module.css'
 
@@ -38,45 +35,27 @@ function formatDate (dateStr: string): string {
   })
 }
 
-function formatRelativeDate (dateStr: string): string {
+function formatShortDate (dateStr: string): string {
   const date = new Date(dateStr)
   const now = new Date()
-
-  console.log('formatRelativeDate', dateStr, date, now)
   const diffTime = now.getTime() - date.getTime()
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
 
   if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Yesterday'
+  if (diffDays === 1) return 'Yest'
 
-  // Calculate Monday of this week
-  const dayOfWeek = now.getDay() // 0=Sunday, 1=Monday, ..., 6=Saturday
+  const shortDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const dayOfWeek = now.getDay()
   const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
   const mondayThisWeek = new Date(now)
   mondayThisWeek.setDate(now.getDate() - daysToMonday)
   mondayThisWeek.setHours(0, 0, 0, 0)
 
-  // Calculate Monday of last week
-  const mondayLastWeek = new Date(mondayThisWeek)
-  mondayLastWeek.setDate(mondayThisWeek.getDate() - 7)
-
-  const days = [
-    'Sunday',
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday'
-  ]
-
   if (date >= mondayThisWeek) {
-    return days[date.getDay()]
-  } else if (date >= mondayLastWeek) {
-    return 'Last ' + days[date.getDay()]
-  } else {
-    return `${diffDays} days ago`
+    return shortDays[date.getDay()]
   }
+
+  return `${diffDays}d`
 }
 
 function groupSetsByArea (
@@ -182,15 +161,10 @@ export default function History ({ refreshKey }: { refreshKey?: number }) {
           w.id === workoutId ? { ...w, workout_date: updated.workout_date } : w
         )
       )
-      console.log('Date updated')
     } catch {
       // revert not needed since input is controlled by logs state
     }
   }
-
-  useEffect(() => {
-    console.log('logs updated', logs)
-  }, [logs])
 
   const handleUpdateSet = async (
     workoutId: number,
@@ -271,7 +245,6 @@ export default function History ({ refreshKey }: { refreshKey?: number }) {
   if (logs.length === 0) {
     return (
       <div className='card'>
-        <h2>Recent Workouts</h2>
         <p className='muted'>No workouts logged yet.</p>
       </div>
     )
@@ -279,12 +252,10 @@ export default function History ({ refreshKey }: { refreshKey?: number }) {
 
   return (
     <div className='card'>
-      <h2>Recent Workouts</h2>
-      <div className={styles.historyList}>
+      <div className={styles.timeline}>
         {logs.map((log, idx) => {
           const areas = groupSetsByArea(log)
-          const isExpanded = expanded.has(log.id)
-          const isEditing = editingId === log.id
+          const isActive = expanded.has(log.id)
           let missedDays = 0
           if (idx > 0) {
             const prev = new Date(logs[idx - 1].workout_date)
@@ -297,195 +268,192 @@ export default function History ({ refreshKey }: { refreshKey?: number }) {
             )
           }
           return (
-            <div key={log.id}>
+            <Fragment key={log.id}>
               {missedDays > 0 && (
-                <div className={styles.dayGap}>
+                <div className={styles.timelineGap}>
                   {Array.from({ length: Math.min(missedDays, 7) }, (_, i) => (
                     <span key={i} className={styles.dayGapDot} />
                   ))}
                 </div>
               )}
-              <div className={styles.historyItem}>
-                <button
-                  className={styles.historyHeader}
-                  onClick={() => toggleExpand(log.id)}
-                >
-                  <span className={styles.historyDate}>
-                    {formatRelativeDate(log.workout_date)}
-                  </span>
-                  <span className={styles.historyAreas}>
-                    {areas.map(a => (
-                      <PointCubes
-                        key={a.area}
-                        fulfilled={a.totalPts}
-                        goal={a.totalPts}
-                        color={areaColorVar(a.area)}
-                        unit={
-                          ptsTypeByArea.get(a.area) === 'active_minutes'
-                            ? 15
-                            : 1
-                        }
+              <button
+                className={`${styles.timelineCol}${isActive ? ` ${styles.timelineColActive}` : ''}`}
+                onClick={() => toggleExpand(log.id)}
+              >
+                <span className={styles.timelineDate}>
+                  {formatShortDate(log.workout_date)}
+                </span>
+                <div className={styles.timelineCubes}>
+                  {areas.flatMap(a => {
+                    const unit =
+                      ptsTypeByArea.get(a.area) === 'active_minutes' ? 15 : 1
+                    const count = Math.floor(a.totalPts / unit)
+                    return Array.from({ length: count }, (_, i) => (
+                      <span
+                        key={`${a.area}-${i}`}
+                        className={styles.timelineCube}
+                        style={{ background: areaColorVar(a.area) }}
                       />
-                    ))}
-                  </span>
-                  <span className='group-arrow'>
-                    {isExpanded ? <FiChevronDown /> : <FiChevronRight />}
-                  </span>
-                </button>
-                {isExpanded && !isEditing && (
-                  <div className={styles.historyDetails}>
-                    <div className={styles.historyFullDate}>
-                      <small>{formatDate(log.workout_date)}</small>
-                      <div className={styles.historyDetailActions}>
-                        <button
-                          className={styles.iconBtn}
-                          onClick={() => enterEdit(log.id)}
-                          title='Edit'
-                        >
-                          <FiEdit2 />
-                        </button>
-                        <button
-                          className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
-                          onClick={() => handleDeleteWorkout(log.id)}
-                          title='Delete'
-                        >
-                          <FiTrash2 />
-                        </button>
-                      </div>
-                    </div>
-                    {areas.map(a => (
-                      <div key={a.area} className={styles.historyAreaGroup}>
-                        <div className={styles.historyAreaHeader}>
-                          <span style={{ color: areaColorVar(a.area) }}>
-                            {a.area}
-                          </span>
-                          <span className={styles.historyAreaPts}>
-                            {a.totalPts} pts
-                          </span>
-                        </div>
-                        <div className={styles.historyExercises}>
-                          {a.exercises.join(', ')}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {isExpanded && isEditing && (
-                  <div className={styles.historyDetails}>
-                    {/* Date edit */}
-                    <div className={styles.historyEditDate}>
-                      <label>Date:</label>
-                      <input
-                        type='date'
-                        className='date-input'
-                        value={log.workout_date}
-                        onChange={e => handleDateChange(log.id, e.target.value)}
-                      />
-                    </div>
-
-                    {/* Sets by area */}
-                    {groupSetsForEdit(log.sets).map(group => (
-                      <div key={group.area} className={styles.historyAreaGroup}>
-                        <div className={styles.historyAreaHeader}>
-                          <span style={{ color: areaColorVar(group.area) }}>
-                            {group.area}
-                          </span>
-                        </div>
-                        {group.sets.map(s => (
-                          <div key={s.id} className={styles.historyEditSet}>
-                            <span className={styles.historyEditSetName}>
-                              {s.exercise_name}
-                            </span>
-                            <input
-                              type='number'
-                              className={styles.historyEditSetPts}
-                              defaultValue={s.pts}
-                              min={0}
-                              onBlur={e => {
-                                const val = parseInt(e.target.value, 10)
-                                if (!isNaN(val) && val >= 0 && val !== s.pts) {
-                                  handleUpdateSet(log.id, s.id, val)
-                                }
-                              }}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter') {
-                                  ;(e.target as HTMLInputElement).blur()
-                                }
-                              }}
-                            />
-                            <span className={styles.historyEditSetUnit}>
-                              pts
-                            </span>
-                            <button
-                              className='set-badge-remove'
-                              onClick={() => handleRemoveSet(log.id, s.id)}
-                              title='Remove set'
-                            >
-                              <FiX />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-
-                    {/* Add set */}
-                    {exercises.length > 0 && (
-                      <div className={styles.historyAddSet}>
-                        <select
-                          value={addExerciseId ?? ''}
-                          onChange={e =>
-                            setAddExerciseId(
-                              e.target.value ? Number(e.target.value) : null
-                            )
-                          }
-                        >
-                          <option value=''>Add exercise…</option>
-                          {exercises.map(ex => (
-                            <option key={ex.id} value={ex.id}>
-                              {ex.name} ({ex.body_area_name})
-                            </option>
-                          ))}
-                        </select>
-                        <input
-                          type='number'
-                          className={styles.historyAddSetPts}
-                          placeholder='pts'
-                          min={0}
-                          value={addPts}
-                          onChange={e => setAddPts(e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') handleAddSet(log.id)
-                          }}
-                        />
-                        <button
-                          className='btn-small'
-                          disabled={!addExerciseId || !addPts}
-                          onClick={() => handleAddSet(log.id)}
-                        >
-                          <FiPlus />
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div className={styles.historyEditActions}>
-                      <button
-                        className='btn-abort'
-                        onClick={() => handleDeleteWorkout(log.id)}
-                      >
-                        <FiTrash2 /> Delete
-                      </button>
-                      <button className='btn-primary' onClick={exitEdit}>
-                        <FiCheck /> Done
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+                    ))
+                  })}
+                </div>
+              </button>
+            </Fragment>
           )
         })}
       </div>
+      {logs
+        .filter(log => expanded.has(log.id))
+        .map(log => {
+          const areas = groupSetsByArea(log)
+          const isEditing = editingId === log.id
+          return (
+            <div key={log.id} className={styles.detailPanel}>
+              {!isEditing && (
+                <>
+                  <div className={styles.historyFullDate}>
+                    <small>{formatDate(log.workout_date)}</small>
+                    <div className={styles.historyDetailActions}>
+                      <button
+                        className={styles.iconBtn}
+                        onClick={() => enterEdit(log.id)}
+                        title='Edit'
+                      >
+                        <FiEdit2 />
+                      </button>
+                      <button
+                        className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                        onClick={() => handleDeleteWorkout(log.id)}
+                        title='Delete'
+                      >
+                        <FiTrash2 />
+                      </button>
+                    </div>
+                  </div>
+                  {areas.map(a => (
+                    <div key={a.area} className={styles.historyAreaGroup}>
+                      <div className={styles.historyAreaHeader}>
+                        <span style={{ color: areaColorVar(a.area) }}>
+                          {a.area}
+                        </span>
+                        <span className={styles.historyAreaPts}>
+                          {a.totalPts} pts
+                        </span>
+                      </div>
+                      <div className={styles.historyExercises}>
+                        {a.exercises.join(', ')}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+              {isEditing && (
+                <>
+                  <div className={styles.historyEditDate}>
+                    <label>Date:</label>
+                    <input
+                      type='date'
+                      className='date-input'
+                      value={log.workout_date}
+                      onChange={e => handleDateChange(log.id, e.target.value)}
+                    />
+                  </div>
+                  {groupSetsForEdit(log.sets).map(group => (
+                    <div key={group.area} className={styles.historyAreaGroup}>
+                      <div className={styles.historyAreaHeader}>
+                        <span style={{ color: areaColorVar(group.area) }}>
+                          {group.area}
+                        </span>
+                      </div>
+                      {group.sets.map(s => (
+                        <div key={s.id} className={styles.historyEditSet}>
+                          <span className={styles.historyEditSetName}>
+                            {s.exercise_name}
+                          </span>
+                          <input
+                            type='number'
+                            className={styles.historyEditSetPts}
+                            defaultValue={s.pts}
+                            min={0}
+                            onBlur={e => {
+                              const val = parseInt(e.target.value, 10)
+                              if (!isNaN(val) && val >= 0 && val !== s.pts) {
+                                handleUpdateSet(log.id, s.id, val)
+                              }
+                            }}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') {
+                                ;(e.target as HTMLInputElement).blur()
+                              }
+                            }}
+                          />
+                          <span className={styles.historyEditSetUnit}>
+                            pts
+                          </span>
+                          <button
+                            className='set-badge-remove'
+                            onClick={() => handleRemoveSet(log.id, s.id)}
+                            title='Remove set'
+                          >
+                            <FiX />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                  {exercises.length > 0 && (
+                    <div className={styles.historyAddSet}>
+                      <select
+                        value={addExerciseId ?? ''}
+                        onChange={e =>
+                          setAddExerciseId(
+                            e.target.value ? Number(e.target.value) : null
+                          )
+                        }
+                      >
+                        <option value=''>Add exercise…</option>
+                        {exercises.map(ex => (
+                          <option key={ex.id} value={ex.id}>
+                            {ex.name} ({ex.body_area_name})
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type='number'
+                        className={styles.historyAddSetPts}
+                        placeholder='pts'
+                        min={0}
+                        value={addPts}
+                        onChange={e => setAddPts(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') handleAddSet(log.id)
+                        }}
+                      />
+                      <button
+                        className='btn-small'
+                        disabled={!addExerciseId || !addPts}
+                        onClick={() => handleAddSet(log.id)}
+                      >
+                        <FiPlus />
+                      </button>
+                    </div>
+                  )}
+                  <div className={styles.historyEditActions}>
+                    <button
+                      className='btn-abort'
+                      onClick={() => handleDeleteWorkout(log.id)}
+                    >
+                      <FiTrash2 /> Delete
+                    </button>
+                    <button className='btn-primary' onClick={exitEdit}>
+                      <FiCheck /> Done
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )
+        })}
     </div>
   )
 }
