@@ -244,12 +244,26 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
     <div className="card">
       <h2>Recent Workouts</h2>
       <div className={styles.historyList}>
-        {logs.map((log) => {
+        {logs.map((log, idx) => {
           const areas = groupSetsByArea(log);
           const isExpanded = expanded.has(log.id);
           const isEditing = editingId === log.id;
+          let missedDays = 0;
+          if (idx > 0) {
+            const prev = new Date(logs[idx - 1].workout_date);
+            const curr = new Date(log.workout_date);
+            missedDays = Math.max(0, Math.round((prev.getTime() - curr.getTime()) / (1000 * 60 * 60 * 24)) - 1);
+          }
           return (
-            <div key={log.id} className={styles.historyItem}>
+            <div key={log.id}>
+              {missedDays > 0 && (
+                <div className={styles.dayGap}>
+                  {Array.from({ length: Math.min(missedDays, 7) }, (_, i) => (
+                    <span key={i} className={styles.dayGapDot} />
+                  ))}
+                </div>
+              )}
+              <div className={styles.historyItem}>
               <button
                 className={styles.historyHeader}
                 onClick={() => toggleExpand(log.id)}
@@ -411,6 +425,7 @@ export default function History({ refreshKey }: { refreshKey?: number }) {
                   </div>
                 </div>
               )}
+              </div>
             </div>
           );
         })}
