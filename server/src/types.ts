@@ -15,6 +15,7 @@ export interface DbExercise {
   id: number;
   body_area_id: number;
   name: string;
+  daysSinceLast: number | null;
 }
 
 export interface DbWorkoutPlan {

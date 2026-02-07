@@ -46,12 +46,6 @@ function AppContent() {
             Workout
           </button>
           <button
-            className={`${styles.tab}${tab === "history" ? ` ${styles.tabActive}` : ""}`}
-            onClick={() => setTab("history")}
-          >
-            History
-          </button>
-          <button
             className={`${styles.tab}${tab === "plans" ? ` ${styles.tabActive}` : ""}`}
             onClick={() => setTab("plans")}
           >
@@ -75,7 +69,6 @@ function AppContent() {
         {tab === "workout" && (
           <Workout onWorkoutChange={handleWorkoutChange} />
         )}
-        {tab === "history" && <History refreshKey={refreshKey} />}
         {tab === "plans" && <Plans />}
         {tab === "exercises" && <Exercises />}
       </main>

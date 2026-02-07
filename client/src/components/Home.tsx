@@ -5,6 +5,7 @@ import type { FocusAreaSuggestion, WorkoutWithSets } from "../types";
 import { areaColorVar } from "../areaColor";
 import PointCubes from "./PointCubes";
 import styles from "./Home.module.css";
+import History from "./History";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -146,6 +147,12 @@ export default function Home({
           </p>
         </div>
       )} */}
+      
+      <div className="card">
+        <button className="btn-cta" onClick={onStartWorkout}>
+          New Workout
+        </button>
+      </div>
 
       {suggestions.length > 0 ? (
         <div className="card">
@@ -178,11 +185,8 @@ export default function Home({
         </div>
       )}
 
-      <div className="card">
-        <button className="btn-cta" onClick={onStartWorkout}>
-          New Workout
-        </button>
-      </div>
+      <History refreshKey={refreshKey} />
+
     </div>
   );
 }

@@ -37,7 +37,14 @@ export default function ExerciseRow({
 
   return (
     <div className={styles.exerciseRow}>
-      <span className={styles.exerciseName}>{exercise.name}</span>
+      <span className={styles.exerciseName}>
+        {exercise.name}
+        {exercise.daysSinceLast != null ? (
+          <span className={styles.daysSince}>{exercise.daysSinceLast}d</span>
+        ) : (
+          <span className={styles.daysSince}>new</span>
+        )}
+      </span>
       {isActive && (
         <div className={styles.exerciseButtons}>
           {presets.map((p) => (
