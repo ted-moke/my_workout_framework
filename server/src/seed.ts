@@ -57,7 +57,8 @@ async function seed() {
         body_area_id INT NOT NULL REFERENCES body_areas(id),
         pts_per_period INT NOT NULL,
         pts_type TEXT NOT NULL CHECK (pts_type IN ('effort', 'active_minutes')),
-        period_length_days INT NOT NULL
+        period_length_days INT NOT NULL,
+        color_index INT NOT NULL DEFAULT 0
       );
 
       CREATE TABLE workouts (
@@ -183,11 +184,12 @@ async function seed() {
       { area: "Neck", pts: 1, type: "effort", days: 7 },
     ];
 
-    for (const fa of focusAreas) {
+    for (let i = 0; i < focusAreas.length; i++) {
+      const fa = focusAreas[i];
       await client.query(
-        `INSERT INTO focus_areas (plan_id, body_area_id, pts_per_period, pts_type, period_length_days)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [planId, bodyAreaMap.get(fa.area)!, fa.pts, fa.type, fa.days]
+        `INSERT INTO focus_areas (plan_id, body_area_id, pts_per_period, pts_type, period_length_days, color_index)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [planId, bodyAreaMap.get(fa.area)!, fa.pts, fa.type, fa.days, i % 12]
       );
     }
 
@@ -212,11 +214,12 @@ async function seed() {
       { area: "Mobility", pts: 2, type: "effort", days: 7 },
     ];
 
-    for (const fa of upperFocusAreas) {
+    for (let i = 0; i < upperFocusAreas.length; i++) {
+      const fa = upperFocusAreas[i];
       await client.query(
-        `INSERT INTO focus_areas (plan_id, body_area_id, pts_per_period, pts_type, period_length_days)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [plan2Id, bodyAreaMap.get(fa.area)!, fa.pts, fa.type, fa.days]
+        `INSERT INTO focus_areas (plan_id, body_area_id, pts_per_period, pts_type, period_length_days, color_index)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [plan2Id, bodyAreaMap.get(fa.area)!, fa.pts, fa.type, fa.days, i % 12]
       );
     }
 

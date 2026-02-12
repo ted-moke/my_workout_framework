@@ -98,10 +98,10 @@ router.post("/api/users/:userId/plans", async (req: Request, res: Response) => {
     const focusAreas: (DbFocusArea & { body_area_name: string })[] = [];
     for (const fa of body.focusAreas) {
       const faResult = await client.query<DbFocusArea & { body_area_name: string }>(
-        `INSERT INTO focus_areas (plan_id, body_area_id, pts_per_period, pts_type, period_length_days)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO focus_areas (plan_id, body_area_id, pts_per_period, pts_type, period_length_days, color_index)
+         VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING focus_areas.*, (SELECT name FROM body_areas WHERE id = $2) as body_area_name`,
-        [plan.id, fa.bodyAreaId, fa.ptsPerPeriod, fa.ptsType, fa.periodLengthDays]
+        [plan.id, fa.bodyAreaId, fa.ptsPerPeriod, fa.ptsType, fa.periodLengthDays, fa.colorIndex]
       );
       focusAreas.push(faResult.rows[0]);
     }
@@ -148,10 +148,10 @@ router.put("/api/plans/:id", async (req: Request, res: Response) => {
     const focusAreas: (DbFocusArea & { body_area_name: string })[] = [];
     for (const fa of body.focusAreas) {
       const faResult = await client.query<DbFocusArea & { body_area_name: string }>(
-        `INSERT INTO focus_areas (plan_id, body_area_id, pts_per_period, pts_type, period_length_days)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO focus_areas (plan_id, body_area_id, pts_per_period, pts_type, period_length_days, color_index)
+         VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING focus_areas.*, (SELECT name FROM body_areas WHERE id = $2) as body_area_name`,
-        [planId, fa.bodyAreaId, fa.ptsPerPeriod, fa.ptsType, fa.periodLengthDays]
+        [planId, fa.bodyAreaId, fa.ptsPerPeriod, fa.ptsType, fa.periodLengthDays, fa.colorIndex]
       );
       focusAreas.push(faResult.rows[0]);
     }

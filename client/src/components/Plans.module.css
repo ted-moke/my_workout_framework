@@ -38,6 +38,7 @@
 .planFocusTag {
   background: var(--bg-surface);
   border: 1px solid var(--border-input);
+  border-left: 3px solid var(--border-input);
   border-radius: var(--radius-sm);
   padding: 0.15rem 0.4rem;
   font-size: var(--font-xs);
@@ -171,4 +172,30 @@
 
 .planEditorActions :global(.btn-primary) {
   flex: 1;
+}
+
+.colorSwatches {
+  display: flex;
+  gap: 0.25rem;
+  flex-basis: 100%;
+  padding: 0.25rem 0;
+}
+
+.colorSwatch {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.colorSwatch:hover {
+  opacity: 0.8;
+}
+
+.colorSwatchActive {
+  border-color: #fff;
+  box-shadow: 0 0 0 1px var(--border-input);
 }

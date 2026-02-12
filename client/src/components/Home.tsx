@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchSuggestions, fetchHistory } from "../api";
 import { useUser } from "../UserContext";
 import type { FocusAreaSuggestion, WorkoutWithSets } from "../types";
-import { areaColorVar } from "../areaColor";
+import { areaColorVar, registerAreaColor } from "../areaColor";
 import PointCubes from "./PointCubes";
 import styles from "./Home.module.css";
 import History from "./History";
@@ -68,7 +68,12 @@ export default function Home({
     if (!user) return;
     setLoading(true);
     Promise.all([
-      fetchSuggestions(user.id).then((r) => setSuggestions(r.suggestions)),
+      fetchSuggestions(user.id).then((r) => {
+        for (const s of r.suggestions) {
+          registerAreaColor(s.focusArea.bodyArea.name, s.focusArea.colorIndex);
+        }
+        setSuggestions(r.suggestions);
+      }),
       fetchHistory(user.id).then(setHistory),
     ])
       .catch(() => setError("Failed to load data"))

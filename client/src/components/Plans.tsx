@@ -9,6 +9,7 @@ import {
 } from "../api";
 import { useUser } from "../UserContext";
 import type { BodyArea, PlanWithFocusAreas, PtsType, CreatePlanBody } from "../types";
+import { colorIndexToVar, PALETTE_SIZE } from "../areaColor";
 import styles from "./Plans.module.css";
 
 interface FocusAreaRow {
@@ -16,10 +17,11 @@ interface FocusAreaRow {
   ptsPerPeriod: number;
   ptsType: PtsType;
   periodLengthDays: number;
+  colorIndex: number;
 }
 
-function emptyRow(): FocusAreaRow {
-  return { bodyAreaId: 0, ptsPerPeriod: 3, ptsType: "effort", periodLengthDays: 7 };
+function emptyRow(count: number): FocusAreaRow {
+  return { bodyAreaId: 0, ptsPerPeriod: 3, ptsType: "effort", periodLengthDays: 7, colorIndex: count % PALETTE_SIZE };
 }
 
 export default function Plans() {
@@ -47,6 +49,7 @@ export default function Plans() {
         ptsPerPeriod: fa.pts_per_period,
         ptsType: fa.pts_type,
         periodLengthDays: fa.period_length_days,
+        colorIndex: fa.color_index,
       }))
     );
   };
@@ -54,7 +57,7 @@ export default function Plans() {
   const startNew = () => {
     setEditing("new");
     setEditName("");
-    setEditRows([emptyRow()]);
+    setEditRows([emptyRow(0)]);
   };
 
   const cancelEdit = () => {
@@ -211,12 +214,24 @@ export default function Plans() {
               >
                 x
               </button>
+              <div className={styles.colorSwatches}>
+                {Array.from({ length: PALETTE_SIZE }, (_, ci) => (
+                  <button
+                    key={ci}
+                    type="button"
+                    className={`${styles.colorSwatch}${row.colorIndex === ci ? ` ${styles.colorSwatchActive}` : ""}`}
+                    style={{ background: colorIndexToVar(ci) }}
+                    onClick={() => updateRow(i, { colorIndex: ci })}
+                    title={`Color ${ci + 1}`}
+                  />
+                ))}
+              </div>
             </div>
           ))}
 
           <button
             className={styles.btnAddRow}
-            onClick={() => setEditRows((prev) => [...prev, emptyRow()])}
+            onClick={() => setEditRows((prev) => [...prev, emptyRow(prev.length)])}
           >
             + Add Focus Area
           </button>
@@ -259,7 +274,11 @@ export default function Plans() {
                 </div>
                 <div className={styles.planFocusAreas}>
                   {plan.focusAreas.map((fa) => (
-                    <span key={fa.id} className={styles.planFocusTag}>
+                    <span
+                      key={fa.id}
+                      className={styles.planFocusTag}
+                      style={{ borderLeftColor: colorIndexToVar(fa.color_index) }}
+                    >
                       {fa.body_area_name}: {fa.pts_per_period}
                       {fa.pts_type === "active_minutes" ? "min" : "pts"} /{" "}
                       {fa.period_length_days}d

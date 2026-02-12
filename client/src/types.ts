@@ -33,6 +33,7 @@ export interface FocusArea {
   pts_per_period: number;
   pts_type: PtsType;
   period_length_days: number;
+  color_index: number;
 }
 
 export interface Workout {
@@ -65,6 +66,7 @@ export interface FocusAreaSuggestion {
     ptsPerPeriod: number;
     ptsType: PtsType;
     periodLengthDays: number;
+    colorIndex: number;
   };
   ptsFulfilled: number;
   daysSinceLast: number | null;
@@ -99,5 +101,6 @@ export interface CreatePlanBody {
     ptsPerPeriod: number;
     ptsType: PtsType;
     periodLengthDays: number;
+    colorIndex: number;
   }[];
 }

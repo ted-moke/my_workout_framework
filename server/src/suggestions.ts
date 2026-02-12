@@ -171,6 +171,7 @@ export async function getSuggestions(
         ptsPerPeriod: fa.pts_per_period,
         ptsType: fa.pts_type,
         periodLengthDays: fa.period_length_days,
+        colorIndex: fa.color_index,
       },
       ptsFulfilled,
       daysSinceLast: daysSinceLast !== null ? Math.round(daysSinceLast) : null,

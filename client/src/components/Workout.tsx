@@ -10,7 +10,7 @@ import {
 } from "../api";
 import { useUser } from "../UserContext";
 import type { FocusAreaSuggestion, SetWithDetails, Workout as WorkoutType } from "../types";
-import { areaColorVar } from "../areaColor";
+import { areaColorVar, registerAreaColor } from "../areaColor";
 import FocusAreaCard from "./FocusAreaCard";
 import PointCubes from "./PointCubes";
 import styles from "./Workout.module.css";
@@ -39,6 +39,9 @@ export default function Workout({
     setLoading(true);
     fetchSuggestions(user.id)
       .then((data) => {
+        for (const s of data.suggestions) {
+          registerAreaColor(s.focusArea.bodyArea.name, s.focusArea.colorIndex);
+        }
         setSuggestions(data.suggestions);
         if (data.activeWorkout) {
           setActiveWorkout(data.activeWorkout.workout);
