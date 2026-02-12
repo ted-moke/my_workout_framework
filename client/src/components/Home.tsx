@@ -177,6 +177,8 @@ export default function Home({
                     goal={s.focusArea.ptsPerPeriod}
                     color={areaColor}
                     unit={s.focusArea.ptsType === "active_minutes" ? 15 : 1}
+                    ptsExpiring1d={s.ptsExpiring1d}
+                    ptsExpiring2d={s.ptsExpiring2d}
                   />
                 </div>
               );

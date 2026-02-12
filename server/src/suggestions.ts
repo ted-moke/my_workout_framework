@@ -13,6 +13,8 @@ interface FocusAreaRow extends DbFocusArea {
 interface FulfillmentRow {
   body_area_id: number;
   pts_fulfilled: string;
+  pts_expiring_1d: string;
+  pts_expiring_2d: string;
 }
 
 interface LastDoneRow {
@@ -46,11 +48,13 @@ export async function getSuggestions(
 
   // 2. Get pts fulfilled per body area within each area's rolling window
   // We need to compute this per focus area since each may have different period_length_days
-  const fulfillmentByArea = new Map<number, number>();
+  const fulfillmentByArea = new Map<number, { ptsFulfilled: number; ptsExpiring1d: number; ptsExpiring2d: number }>();
 
   for (const fa of focusRows) {
     const result = await pool.query<FulfillmentRow>(
-      `SELECT COALESCE(SUM(s.pts), 0) as pts_fulfilled
+      `SELECT COALESCE(SUM(s.pts), 0) as pts_fulfilled,
+              COALESCE(SUM(CASE WHEN $2 - (CURRENT_DATE - w.workout_date) + 1 = 1 THEN s.pts ELSE 0 END), 0) as pts_expiring_1d,
+              COALESCE(SUM(CASE WHEN $2 - (CURRENT_DATE - w.workout_date) + 1 = 2 THEN s.pts ELSE 0 END), 0) as pts_expiring_2d
        FROM sets s
        JOIN workouts w ON w.id = s.workout_id
        JOIN exercises e ON e.id = s.exercise_id
@@ -60,10 +64,12 @@ export async function getSuggestions(
          AND e.body_area_id = $3`,
       [userId, fa.period_length_days, fa.body_area_id]
     );
-    fulfillmentByArea.set(
-      fa.id,
-      parseInt(result.rows[0]?.pts_fulfilled ?? "0", 10)
-    );
+    const row = result.rows[0];
+    fulfillmentByArea.set(fa.id, {
+      ptsFulfilled: parseInt(row?.pts_fulfilled ?? "0", 10),
+      ptsExpiring1d: parseInt(row?.pts_expiring_1d ?? "0", 10),
+      ptsExpiring2d: parseInt(row?.pts_expiring_2d ?? "0", 10),
+    });
   }
 
   // 3. Get days since last workout per body area (all time)
@@ -134,7 +140,8 @@ export async function getSuggestions(
 
   // 5. Compute suggestions
   const suggestions: FocusAreaSuggestion[] = focusRows.map((fa) => {
-    const ptsFulfilled = fulfillmentByArea.get(fa.id) ?? 0;
+    const fulfillment = fulfillmentByArea.get(fa.id) ?? { ptsFulfilled: 0, ptsExpiring1d: 0, ptsExpiring2d: 0 };
+    const ptsFulfilled = fulfillment.ptsFulfilled;
     const lastEver = lastDoneMap.get(fa.body_area_id);
 
     let daysSinceLast: number | null = null;
@@ -174,6 +181,8 @@ export async function getSuggestions(
         colorIndex: fa.color_index,
       },
       ptsFulfilled,
+      ptsExpiring1d: fulfillment.ptsExpiring1d,
+      ptsExpiring2d: fulfillment.ptsExpiring2d,
       daysSinceLast: daysSinceLast !== null ? Math.round(daysSinceLast) : null,
       overdueFraction: Math.round(overdueFraction * 100) / 100,
       fulfillmentFraction: Math.round(fulfillmentFraction * 100) / 100,

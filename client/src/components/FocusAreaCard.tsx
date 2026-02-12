@@ -46,6 +46,8 @@ export default function FocusAreaCard({
           color={areaColor}
           unit={unit}
           newPts={workoutPts}
+          ptsExpiring1d={suggestion.ptsExpiring1d}
+          ptsExpiring2d={suggestion.ptsExpiring2d}
         />
       </button>
       {open && (

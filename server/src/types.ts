@@ -64,6 +64,8 @@ export interface FocusAreaSuggestion {
     colorIndex: number;
   };
   ptsFulfilled: number;
+  ptsExpiring1d: number;
+  ptsExpiring2d: number;
   daysSinceLast: number | null;
   overdueFraction: number;
   fulfillmentFraction: number;
