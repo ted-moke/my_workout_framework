@@ -117,3 +117,27 @@
 .editorActions :global(.btn-primary) {
   flex: 1;
 }
+
+/* Inline edit row for body areas */
+.inlineEdit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.25rem 0;
+}
+
+.inlineEdit input {
+  flex: 1;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-md);
+  padding: 0.375rem 0.5rem;
+  color: var(--text-secondary);
+  font-size: var(--font-lg);
+}
+
+.inlineEdit input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}

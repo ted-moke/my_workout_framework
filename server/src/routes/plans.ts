@@ -23,6 +23,103 @@ router.get("/api/body-areas", async (_req: Request, res: Response) => {
   }
 });
 
+// POST /api/body-areas - Create a body area
+router.post("/api/body-areas", async (req: Request, res: Response) => {
+  const { name } = req.body;
+
+  if (!name?.trim()) {
+    res.status(400).json({ error: "Body area name is required" });
+    return;
+  }
+
+  try {
+    const result = await pool.query<DbBodyArea>(
+      "INSERT INTO body_areas (name) VALUES ($1) RETURNING *",
+      [name.trim()]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err: any) {
+    if (err.code === "23505") {
+      res.status(409).json({ error: "A body area with that name already exists" });
+      return;
+    }
+    console.error("Error creating body area:", err);
+    res.status(500).json({ error: "Failed to create body area" });
+  }
+});
+
+// PUT /api/body-areas/:id - Rename a body area
+router.put("/api/body-areas/:id", async (req: Request, res: Response) => {
+  const id = parseInt(String(req.params.id), 10);
+  const { name } = req.body;
+
+  if (!name?.trim()) {
+    res.status(400).json({ error: "Body area name is required" });
+    return;
+  }
+
+  try {
+    const result = await pool.query<DbBodyArea>(
+      "UPDATE body_areas SET name = $1 WHERE id = $2 RETURNING *",
+      [name.trim(), id]
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: "Body area not found" });
+      return;
+    }
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    if (err.code === "23505") {
+      res.status(409).json({ error: "A body area with that name already exists" });
+      return;
+    }
+    console.error("Error updating body area:", err);
+    res.status(500).json({ error: "Failed to update body area" });
+  }
+});
+
+// DELETE /api/body-areas/:id - Delete a body area (409 if referenced)
+router.delete("/api/body-areas/:id", async (req: Request, res: Response) => {
+  const id = parseInt(String(req.params.id), 10);
+
+  try {
+    const exerciseCheck = await pool.query(
+      "SELECT COUNT(*) FROM exercises WHERE body_area_id = $1",
+      [id]
+    );
+    if (parseInt(exerciseCheck.rows[0].count, 10) > 0) {
+      res.status(409).json({
+        error: "Cannot delete body area — it has exercises referencing it",
+      });
+      return;
+    }
+
+    const focusCheck = await pool.query(
+      "SELECT COUNT(*) FROM focus_areas WHERE body_area_id = $1",
+      [id]
+    );
+    if (parseInt(focusCheck.rows[0].count, 10) > 0) {
+      res.status(409).json({
+        error: "Cannot delete body area — it has focus areas referencing it",
+      });
+      return;
+    }
+
+    const result = await pool.query(
+      "DELETE FROM body_areas WHERE id = $1 RETURNING id",
+      [id]
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: "Body area not found" });
+      return;
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Error deleting body area:", err);
+    res.status(500).json({ error: "Failed to delete body area" });
+  }
+});
+
 // GET /api/exercises - List all exercises grouped by body area
 router.get("/api/exercises", async (_req: Request, res: Response) => {
   try {

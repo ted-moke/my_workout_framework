@@ -85,6 +85,31 @@ export function fetchBodyAreas(): Promise<BodyArea[]> {
   return fetch(`${BASE}/body-areas`).then((r) => json<BodyArea[]>(r));
 }
 
+export function createBodyArea(name: string): Promise<BodyArea> {
+  return fetch(`${BASE}/body-areas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  }).then((r) => json<BodyArea>(r));
+}
+
+export function updateBodyArea(id: number, name: string): Promise<BodyArea> {
+  return fetch(`${BASE}/body-areas/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  }).then((r) => json<BodyArea>(r));
+}
+
+export function deleteBodyArea(id: number): Promise<void> {
+  return fetch(`${BASE}/body-areas/${id}`, { method: "DELETE" }).then(async (r) => {
+    if (!r.ok) {
+      const body = await r.json().catch(() => ({ error: "Failed to delete body area" }));
+      throw new Error(body.error || "Failed to delete body area");
+    }
+  });
+}
+
 export function fetchExercises(): Promise<(Exercise & { body_area_name: string })[]> {
   return fetch(`${BASE}/exercises`).then((r) =>
     json<(Exercise & { body_area_name: string })[]>(r)
