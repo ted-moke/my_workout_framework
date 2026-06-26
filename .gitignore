@@ -18,6 +18,7 @@ npm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+*:Zone.Identifier
 
 # IDE
 .idea/
