@@ -53,6 +53,13 @@
   color: var(--text-secondary);
 }
 
+/* Stats row inside Progress card */
+.statsRow {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
 /* Progress section – horizontal layout */
 .progressList {
   display: flex;

@@ -111,7 +111,10 @@ export default function History ({ refreshKey }: { refreshKey?: number }) {
   useEffect(() => {
     if (!user) return
     fetchHistory(user.id)
-      .then(setLogs)
+      .then(all => {
+        const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000
+        setLogs(all.filter(l => new Date(l.workout_date).getTime() >= cutoff))
+      })
       .catch(() => setError('Failed to load history'))
     fetchSuggestions(user.id)
       .then(data => {

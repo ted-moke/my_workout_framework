@@ -170,7 +170,7 @@ router.get("/api/users/:userId/history", async (req: Request, res: Response) => 
       `SELECT * FROM workouts
        WHERE user_id = $1 AND finished = true
        ORDER BY workout_date DESC
-       LIMIT 30`,
+       LIMIT 14`,
       [userId]
     );
 

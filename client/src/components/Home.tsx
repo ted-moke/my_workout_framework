@@ -18,8 +18,20 @@ function timeAgo(dateStr: string): string {
 function workoutsThisWeek(logs: WorkoutWithSets[]): number {
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   return logs.filter(
-    (log) => new Date(log.completed_at!).getTime() >= weekAgo
+    (log) => new Date(log.workout_date).getTime() >= weekAgo
   ).length;
+}
+
+function avgPtsPerWorkout(logs: WorkoutWithSets[], ptsTypeByArea: Map<string, string>): number {
+  if (logs.length === 0) return 0;
+  const total = logs.reduce((sum, log) => {
+    const workoutPts = log.sets.reduce((s, set) => {
+      const unit = ptsTypeByArea.get(set.body_area_name) === "active_minutes" ? 15 : 1;
+      return s + set.pts / unit;
+    }, 0);
+    return sum + workoutPts;
+  }, 0);
+  return total / logs.length;
 }
 
 function currentStreak(logs: WorkoutWithSets[]): number {
@@ -74,7 +86,12 @@ export default function Home({
         }
         setSuggestions(r.suggestions);
       }),
-      fetchHistory(user.id).then(setHistory),
+      fetchHistory(user.id).then((all) => {
+        const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        setHistory(
+          all.filter((l) => new Date(l.workout_date).getTime() >= cutoff)
+        );
+      }),
     ])
       .catch(() => setError("Failed to load data"))
       .finally(() => setLoading(false));
@@ -86,6 +103,9 @@ export default function Home({
   // const hasWorkouts = history.length > 0;
   // const lastLog = hasWorkouts ? history[0] : null;
   const allAreas = suggestions;
+  const ptsTypeByArea = new Map<string, string>(
+    suggestions.map((s) => [s.focusArea.bodyArea.name, s.focusArea.ptsType])
+  );
   // const allAreas = [...suggestions].sort(
   //   (a, b) => {
   //     if (b.daysSinceLast == null && a.daysSinceLast == null) {
@@ -164,6 +184,18 @@ export default function Home({
       {suggestions.length > 0 ? (
         <div className="card">
           <h2>Progress</h2>
+          {history.length > 0 && (
+            <div className={styles.statsRow}>
+              <div className={styles.statItem}>
+                <span className={styles.statValue}>{avgPtsPerWorkout(history, ptsTypeByArea).toFixed(1)}</span>
+                <span className={styles.statLabel}>pts / workout</span>
+              </div>
+              <div className={styles.statItem}>
+                <span className={styles.statValue}>{workoutsThisWeek(history)}</span>
+                <span className={styles.statLabel}>workouts / week</span>
+              </div>
+            </div>
+          )}
           <div className={styles.progressList}>
             {allAreas.map((s) => {
               const areaColor = areaColorVar(s.focusArea.bodyArea.name);
