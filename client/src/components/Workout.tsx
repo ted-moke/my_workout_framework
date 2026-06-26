@@ -7,6 +7,7 @@ import {
   abortWorkout,
   addSet,
   removeSet,
+  updateSet,
 } from "../api";
 import { useUser } from "../UserContext";
 import type { FocusAreaSuggestion, SetWithDetails, Workout as WorkoutType } from "../types";
@@ -143,6 +144,17 @@ export default function Workout({
     }
   };
 
+  const handleUpdateSet = async (setId: number, pts: number) => {
+    const prevSets = sets;
+    setSets((prev) => prev.map((s) => s.id === setId ? { ...s, pts } : s));
+    try {
+      await updateSet(setId, pts);
+    } catch {
+      setSets(prevSets);
+      setError("Failed to update set");
+    }
+  };
+
   if (error && !loading) {
     return (
       <div className="error">
@@ -200,20 +212,6 @@ export default function Workout({
           </div>
         )}
 
-        <div className={styles.exerciseList}>
-          {suggestions.map((s, i) => (
-            <FocusAreaCard
-              key={s.focusArea.id}
-              suggestion={s}
-              sets={sets}
-              isActive={isActive}
-              defaultOpen={isActive ? i < 3 : i === 0}
-              onAddSet={handleAddSet}
-              onRemoveSet={handleRemoveSet}
-            />
-          ))}
-        </div>
-
         {!isActive ? (
           <div className={styles.startWorkoutRow}>
             <div className={styles.datePickerRow}>
@@ -245,6 +243,21 @@ export default function Workout({
             </button>
           </div>
         )}
+
+        <div className={styles.exerciseList}>
+          {suggestions.map((s, i) => (
+            <FocusAreaCard
+              key={s.focusArea.id}
+              suggestion={s}
+              sets={sets}
+              isActive={isActive}
+              defaultOpen={false}
+              onAddSet={handleAddSet}
+              onRemoveSet={handleRemoveSet}
+              onUpdateSet={handleUpdateSet}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
