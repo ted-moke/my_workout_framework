@@ -92,7 +92,7 @@ export async function getSuggestions(
 
   // 4. Get all exercises for the relevant body areas
   const exerciseResult = await pool.query<DbExercise>(
-    `SELECT * FROM exercises WHERE body_area_id = ANY($1) ORDER BY body_area_id, name`,
+    `SELECT * FROM exercises WHERE body_area_id = ANY($1) ORDER BY body_area_id, is_placeholder, name`,
     [bodyAreaIds]
   );
 
@@ -128,9 +128,10 @@ export async function getSuggestions(
     exercisesByArea.set(ex.body_area_id, list);
   }
 
-  // Sort exercises: never-done first (null), then by daysSinceLast descending
+  // Sort exercises: placeholders last, then never-done first (null), then by daysSinceLast descending
   for (const [, exercises] of exercisesByArea) {
     exercises.sort((a, b) => {
+      if (a.is_placeholder !== b.is_placeholder) return a.is_placeholder ? 1 : -1;
       if (a.daysSinceLast === null && b.daysSinceLast === null) return 0;
       if (a.daysSinceLast === null) return -1;
       if (b.daysSinceLast === null) return 1;

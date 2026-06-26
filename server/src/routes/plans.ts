@@ -37,7 +37,13 @@ router.post("/api/body-areas", async (req: Request, res: Response) => {
       "INSERT INTO body_areas (name) VALUES ($1) RETURNING *",
       [name.trim()]
     );
-    res.status(201).json(result.rows[0]);
+    const bodyArea = result.rows[0];
+    // Auto-create a placeholder "General" exercise for this body area
+    await pool.query(
+      "INSERT INTO exercises (name, body_area_id, is_placeholder) VALUES ('General', $1, true)",
+      [bodyArea.id]
+    );
+    res.status(201).json(bodyArea);
   } catch (err: any) {
     if (err.code === "23505") {
       res.status(409).json({ error: "A body area with that name already exists" });

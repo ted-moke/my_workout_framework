@@ -147,8 +147,9 @@ export default function Exercises() {
     }
   };
 
-  // Group exercises by body area
+  // Group non-placeholder exercises by body area
   const grouped = exercises.reduce<Record<string, ExerciseWithArea[]>>((acc, ex) => {
+    if (ex.is_placeholder) return acc;
     const key = ex.body_area_name;
     if (!acc[key]) acc[key] = [];
     acc[key].push(ex);

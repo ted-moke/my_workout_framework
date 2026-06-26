@@ -38,8 +38,12 @@ async function seed() {
       CREATE TABLE exercises (
         id SERIAL PRIMARY KEY,
         body_area_id INT NOT NULL REFERENCES body_areas(id),
-        name TEXT NOT NULL
+        name TEXT NOT NULL,
+        is_placeholder BOOLEAN NOT NULL DEFAULT false
       );
+
+      CREATE UNIQUE INDEX exercises_one_placeholder_per_area
+        ON exercises (body_area_id) WHERE is_placeholder = true;
 
       CREATE TABLE workout_plans (
         id SERIAL PRIMARY KEY,
@@ -142,6 +146,14 @@ async function seed() {
         );
         exerciseMap.set(name, result.rows[0].id);
       }
+    }
+
+    // Seed placeholder "General" exercise for each body area
+    for (const areaId of bodyAreaMap.values()) {
+      await client.query(
+        `INSERT INTO exercises (body_area_id, name, is_placeholder) VALUES ($1, 'General', true)`,
+        [areaId]
+      );
     }
 
     // Seed user
