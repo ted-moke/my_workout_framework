@@ -43,6 +43,39 @@
   border-color: var(--border-input-hover);
 }
 
+.locationToggle {
+  display: flex;
+  gap: 0.125rem;
+  margin-left: auto;
+  padding: 0.125rem;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-md);
+}
+
+.locationBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-sm);
+  transition: color 0.15s, background 0.15s;
+}
+
+.locationBtn:hover {
+  color: var(--text-tertiary);
+}
+
+.locationBtnActive {
+  background: var(--bg-surface);
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
 .tabs {
   display: flex;
   gap: 0.25rem;

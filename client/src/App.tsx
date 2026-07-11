@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FiHome, FiMapPin } from "react-icons/fi";
 import { UserProvider, useUser } from "./UserContext";
 import UserSelect from "./components/UserSelect";
 import Home from "./components/Home";
@@ -12,7 +13,7 @@ import styles from "./App.module.css";
 type Tab = "home" | "workout" | "history" | "plans" | "exercises";
 
 function AppContent() {
-  const { user, setUser } = useUser();
+  const { user, setUser, setLocation } = useUser();
   const [tab, setTab] = useState<Tab>("home");
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -31,6 +32,25 @@ function AppContent() {
           <button className={styles.userSwitch} onClick={() => setUser(null)}>
             Switch
           </button>
+          <div className={styles.locationToggle}>
+            {(["home", "gym"] as const).map((loc) => (
+              <button
+                key={loc}
+                className={`${styles.locationBtn}${
+                  user.workout_location === loc ? ` ${styles.locationBtnActive}` : ""
+                }`}
+                onClick={() => setLocation(loc)}
+                title={
+                  loc === "home"
+                    ? "Only show exercises you have the equipment for"
+                    : "Show all exercises"
+                }
+              >
+                {loc === "home" ? <FiHome /> : <FiMapPin />}
+                {loc === "home" ? "Home" : "Gym"}
+              </button>
+            ))}
+          </div>
         </div>
         <nav className={styles.tabs}>
           <button

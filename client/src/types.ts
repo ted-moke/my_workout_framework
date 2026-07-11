@@ -2,13 +2,21 @@
 
 export type PtsType = "effort" | "active_minutes";
 
+export type WorkoutLocation = "home" | "gym";
+
 export interface User {
   id: number;
   name: string;
   active_plan_id: number | null;
+  workout_location: WorkoutLocation;
 }
 
 export interface BodyArea {
+  id: number;
+  name: string;
+}
+
+export interface Equipment {
   id: number;
   name: string;
 }
@@ -19,6 +27,7 @@ export interface Exercise {
   name: string;
   is_placeholder: boolean;
   daysSinceLast: number | null;
+  equipment: Equipment[];
 }
 
 export interface WorkoutPlan {

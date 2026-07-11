@@ -1,8 +1,10 @@
 import type {
   User,
   BodyArea,
+  Equipment,
   Exercise,
   Workout,
+  WorkoutLocation,
   WorkoutSet,
   SuggestionsResponse,
   PlanWithFocusAreas,
@@ -41,6 +43,65 @@ export function setActivePlan(userId: number, planId: number | null): Promise<Us
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ planId }),
   }).then((r) => json<User>(r));
+}
+
+export function setWorkoutLocation(
+  userId: number,
+  location: WorkoutLocation
+): Promise<User> {
+  return fetch(`${BASE}/users/${userId}/location`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ location }),
+  }).then((r) => json<User>(r));
+}
+
+// --- Equipment ---
+
+export function fetchEquipment(): Promise<Equipment[]> {
+  return fetch(`${BASE}/equipment`).then((r) => json<Equipment[]>(r));
+}
+
+export function createEquipment(name: string): Promise<Equipment> {
+  return fetch(`${BASE}/equipment`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  }).then((r) => json<Equipment>(r));
+}
+
+export function updateEquipment(id: number, name: string): Promise<Equipment> {
+  return fetch(`${BASE}/equipment/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  }).then((r) => json<Equipment>(r));
+}
+
+export function deleteEquipment(id: number): Promise<void> {
+  return fetch(`${BASE}/equipment/${id}`, { method: "DELETE" }).then(async (r) => {
+    if (!r.ok) {
+      const body = await r.json().catch(() => ({ error: "Failed to delete equipment" }));
+      throw new Error(body.error || "Failed to delete equipment");
+    }
+  });
+}
+
+export function fetchUserEquipment(userId: number): Promise<Equipment[]> {
+  return fetch(`${BASE}/users/${userId}/equipment`).then((r) =>
+    json<Equipment[]>(r)
+  );
+}
+
+export function setUserEquipment(
+  userId: number,
+  equipmentIds: number[]
+): Promise<Equipment[]> {
+  return fetch(`${BASE}/users/${userId}/equipment`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ equipmentIds }),
+  }).then((r) => json<Equipment[]>(r));
 }
 
 // --- Plans ---
@@ -118,24 +179,26 @@ export function fetchExercises(): Promise<(Exercise & { body_area_name: string }
 
 export function createExercise(
   name: string,
-  bodyAreaId: number
+  bodyAreaId: number,
+  equipmentIds: number[] = []
 ): Promise<Exercise & { body_area_name: string }> {
   return fetch(`${BASE}/exercises`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, bodyAreaId }),
+    body: JSON.stringify({ name, bodyAreaId, equipmentIds }),
   }).then((r) => json<Exercise & { body_area_name: string }>(r));
 }
 
 export function updateExercise(
   id: number,
   name: string,
-  bodyAreaId: number
+  bodyAreaId: number,
+  equipmentIds: number[] = []
 ): Promise<Exercise & { body_area_name: string }> {
   return fetch(`${BASE}/exercises/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, bodyAreaId }),
+    body: JSON.stringify({ name, bodyAreaId, equipmentIds }),
   }).then((r) => json<Exercise & { body_area_name: string }>(r));
 }
 

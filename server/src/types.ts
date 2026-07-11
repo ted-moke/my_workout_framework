@@ -4,9 +4,15 @@ export interface DbUser {
   id: number;
   name: string;
   active_plan_id: number | null;
+  workout_location: WorkoutLocation;
 }
 
 export interface DbBodyArea {
+  id: number;
+  name: string;
+}
+
+export interface DbEquipment {
   id: number;
   name: string;
 }
@@ -17,6 +23,7 @@ export interface DbExercise {
   name: string;
   is_placeholder: boolean;
   daysSinceLast: number | null;
+  equipment: DbEquipment[];
 }
 
 export interface DbWorkoutPlan {
@@ -54,6 +61,8 @@ export interface DbSet {
 // API response types
 
 export type PtsType = "effort" | "active_minutes";
+
+export type WorkoutLocation = "home" | "gym";
 
 export interface FocusAreaSuggestion {
   focusArea: {

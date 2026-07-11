@@ -12,6 +12,9 @@ async function seed() {
       DROP TABLE IF EXISTS workouts CASCADE;
       DROP TABLE IF EXISTS focus_areas CASCADE;
       DROP TABLE IF EXISTS workout_plans CASCADE;
+      DROP TABLE IF EXISTS exercise_equipment CASCADE;
+      DROP TABLE IF EXISTS user_equipment CASCADE;
+      DROP TABLE IF EXISTS equipment CASCADE;
       DROP TABLE IF EXISTS exercises CASCADE;
       DROP TABLE IF EXISTS body_areas CASCADE;
       DROP TABLE IF EXISTS users CASCADE;
@@ -27,7 +30,9 @@ async function seed() {
       CREATE TABLE users (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
-        active_plan_id INT
+        active_plan_id INT,
+        workout_location TEXT NOT NULL DEFAULT 'gym'
+          CHECK (workout_location IN ('home', 'gym'))
       );
 
       CREATE TABLE body_areas (
@@ -44,6 +49,23 @@ async function seed() {
 
       CREATE UNIQUE INDEX exercises_one_placeholder_per_area
         ON exercises (body_area_id) WHERE is_placeholder = true;
+
+      CREATE TABLE equipment (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE
+      );
+
+      CREATE TABLE exercise_equipment (
+        exercise_id INT NOT NULL REFERENCES exercises(id) ON DELETE CASCADE,
+        equipment_id INT NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+        PRIMARY KEY (exercise_id, equipment_id)
+      );
+
+      CREATE TABLE user_equipment (
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        equipment_id INT NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+        PRIMARY KEY (user_id, equipment_id)
+      );
 
       CREATE TABLE workout_plans (
         id SERIAL PRIMARY KEY,
@@ -156,11 +178,83 @@ async function seed() {
       );
     }
 
+    // Seed equipment
+    const equipmentRows = await client.query(`
+      INSERT INTO equipment (name) VALUES
+        ('Barbell'),
+        ('Dumbbells'),
+        ('Kettlebell'),
+        ('Bench'),
+        ('Squat Rack'),
+        ('Cable Machine'),
+        ('Pull-up Bar'),
+        ('Resistance Band'),
+        ('Medicine Ball'),
+        ('Box/Step'),
+        ('Landmine'),
+        ('Treadmill'),
+        ('Stairmaster'),
+        ('Mat')
+      RETURNING id, name
+    `);
+    const equipmentMap = new Map<string, number>(
+      equipmentRows.rows.map((r: { name: string; id: number }) => [r.name, r.id])
+    );
+
+    // Map exercises to the equipment they require. Anything omitted is bodyweight
+    // and is therefore available at home regardless of what the user owns.
+    const equipmentByExercise: Record<string, string[]> = {
+      "Single Leg Romanian Deadlift": ["Dumbbells"],
+      "Step Ups": ["Box/Step"],
+      "Med Ball Throw": ["Medicine Ball"],
+      "Scoop Toss": ["Medicine Ball"],
+      "Shotput Throw": ["Medicine Ball"],
+      "Cable Chops/Lifts": ["Cable Machine"],
+      Stairmaster: ["Stairmaster"],
+      "Rucking Incline": ["Treadmill"],
+      "Chest Supported Row": ["Bench", "Dumbbells"],
+      "Lat Pulldown": ["Cable Machine"],
+      "Face Pulls": ["Cable Machine"],
+      "Landmine Press": ["Landmine", "Barbell"],
+      "Pallof Press": ["Cable Machine"],
+      "Bench Press": ["Barbell", "Bench"],
+      "Incline Dumbbell Press": ["Dumbbells", "Bench"],
+      "Cable Fly": ["Cable Machine"],
+      "Barbell Curl": ["Barbell"],
+      "Tricep Pushdown": ["Cable Machine"],
+      "Hammer Curl": ["Dumbbells"],
+      "Overhead Tricep Extension": ["Dumbbells"],
+      "Farmer's Carry": ["Dumbbells"],
+      "Suitcase Carry": ["Dumbbells"],
+      "Wrist flexion": ["Dumbbells"],
+      "Wrist Extension": ["Dumbbells"],
+      "Wrist Supination": ["Dumbbells"],
+      "Wrist Pronation": ["Dumbbells"],
+      "Grip holds": ["Dumbbells"],
+    };
+
+    for (const [exerciseName, equipmentNames] of Object.entries(equipmentByExercise)) {
+      for (const equipmentName of equipmentNames) {
+        await client.query(
+          `INSERT INTO exercise_equipment (exercise_id, equipment_id) VALUES ($1, $2)`,
+          [exerciseMap.get(exerciseName)!, equipmentMap.get(equipmentName)!]
+        );
+      }
+    }
+
     // Seed user
     const userResult = await client.query(
       `INSERT INTO users (name) VALUES ('PJ') RETURNING id`
     );
     const userId = userResult.rows[0].id;
+
+    // Seed a modest home gym
+    for (const name of ["Dumbbells", "Resistance Band", "Mat", "Pull-up Bar"]) {
+      await client.query(
+        `INSERT INTO user_equipment (user_id, equipment_id) VALUES ($1, $2)`,
+        [userId, equipmentMap.get(name)!]
+      );
+    }
 
     // Seed workout plan: General Fitness
     const planResult = await client.query(

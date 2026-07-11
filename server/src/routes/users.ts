@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import pool from "../db";
-import type { DbUser } from "../types";
+import type { DbUser, WorkoutLocation } from "../types";
 
 const router = Router();
 
@@ -8,7 +8,7 @@ const router = Router();
 router.get("/api/users", async (_req: Request, res: Response) => {
   try {
     const result = await pool.query<DbUser>(
-      "SELECT id, name, active_plan_id FROM users ORDER BY id"
+      "SELECT id, name, active_plan_id, workout_location FROM users ORDER BY id"
     );
     res.json(result.rows);
   } catch (err) {
@@ -26,7 +26,7 @@ router.post("/api/users", async (req: Request, res: Response) => {
   }
   try {
     const result = await pool.query<DbUser>(
-      "INSERT INTO users (name) VALUES ($1) RETURNING id, name, active_plan_id",
+      "INSERT INTO users (name) VALUES ($1) RETURNING id, name, active_plan_id, workout_location",
       [name.trim()]
     );
     res.status(201).json(result.rows[0]);
@@ -55,7 +55,7 @@ router.put("/api/users/:id/active-plan", async (req: Request, res: Response) => 
     }
 
     const result = await pool.query<DbUser>(
-      "UPDATE users SET active_plan_id = $1 WHERE id = $2 RETURNING id, name, active_plan_id",
+      "UPDATE users SET active_plan_id = $1 WHERE id = $2 RETURNING id, name, active_plan_id, workout_location",
       [planId ?? null, userId]
     );
     if (result.rows.length === 0) {
@@ -66,6 +66,32 @@ router.put("/api/users/:id/active-plan", async (req: Request, res: Response) => 
   } catch (err) {
     console.error("Error setting active plan:", err);
     res.status(500).json({ error: "Failed to set active plan" });
+  }
+});
+
+// PUT /api/users/:id/location - Set where the user is working out (home or gym)
+router.put("/api/users/:id/location", async (req: Request, res: Response) => {
+  const userId = parseInt(String(req.params.id), 10);
+  const { location } = req.body as { location?: WorkoutLocation };
+
+  if (location !== "home" && location !== "gym") {
+    res.status(400).json({ error: "Location must be 'home' or 'gym'" });
+    return;
+  }
+
+  try {
+    const result = await pool.query<DbUser>(
+      "UPDATE users SET workout_location = $1 WHERE id = $2 RETURNING id, name, active_plan_id, workout_location",
+      [location, userId]
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error setting workout location:", err);
+    res.status(500).json({ error: "Failed to set workout location" });
   }
 });
 

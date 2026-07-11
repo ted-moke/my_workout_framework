@@ -126,11 +126,31 @@ router.delete("/api/body-areas/:id", async (req: Request, res: Response) => {
   }
 });
 
+// Equipment required by an exercise, as a JSON array column. Empty = bodyweight.
+const EQUIPMENT_AGG = `COALESCE(
+  (SELECT json_agg(json_build_object('id', eq.id, 'name', eq.name) ORDER BY eq.name)
+   FROM exercise_equipment ee
+   JOIN equipment eq ON eq.id = ee.equipment_id
+   WHERE ee.exercise_id = e.id),
+  '[]'::json
+) AS equipment`;
+
+async function fetchExerciseWithEquipment(exerciseId: number) {
+  const result = await pool.query<DbExercise & { body_area_name: string }>(
+    `SELECT e.*, ba.name as body_area_name, ${EQUIPMENT_AGG}
+     FROM exercises e
+     JOIN body_areas ba ON ba.id = e.body_area_id
+     WHERE e.id = $1`,
+    [exerciseId]
+  );
+  return result.rows[0];
+}
+
 // GET /api/exercises - List all exercises grouped by body area
 router.get("/api/exercises", async (_req: Request, res: Response) => {
   try {
     const result = await pool.query<DbExercise & { body_area_name: string }>(
-      `SELECT e.*, ba.name as body_area_name
+      `SELECT e.*, ba.name as body_area_name, ${EQUIPMENT_AGG}
        FROM exercises e
        JOIN body_areas ba ON ba.id = e.body_area_id
        ORDER BY ba.name, e.name`
@@ -307,7 +327,7 @@ router.delete("/api/plans/:id", async (req: Request, res: Response) => {
 
 // POST /api/exercises - Create a new exercise
 router.post("/api/exercises", async (req: Request, res: Response) => {
-  const { name, bodyAreaId } = req.body;
+  const { name, bodyAreaId, equipmentIds = [] } = req.body;
 
   if (!name?.trim()) {
     res.status(400).json({ error: "Exercise name is required" });
@@ -318,23 +338,36 @@ router.post("/api/exercises", async (req: Request, res: Response) => {
     return;
   }
 
+  const client = await pool.connect();
   try {
-    const result = await pool.query<DbExercise & { body_area_name: string }>(
-      `INSERT INTO exercises (name, body_area_id) VALUES ($1, $2)
-       RETURNING exercises.*, (SELECT name FROM body_areas WHERE id = $2) as body_area_name`,
+    await client.query("BEGIN");
+    const result = await client.query<DbExercise>(
+      "INSERT INTO exercises (name, body_area_id) VALUES ($1, $2) RETURNING id",
       [name.trim(), bodyAreaId]
     );
-    res.status(201).json(result.rows[0]);
+    const exerciseId = result.rows[0].id;
+    if (equipmentIds.length > 0) {
+      await client.query(
+        `INSERT INTO exercise_equipment (exercise_id, equipment_id)
+         SELECT $1, UNNEST($2::int[])`,
+        [exerciseId, equipmentIds]
+      );
+    }
+    await client.query("COMMIT");
+    res.status(201).json(await fetchExerciseWithEquipment(exerciseId));
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error("Error creating exercise:", err);
     res.status(500).json({ error: "Failed to create exercise" });
+  } finally {
+    client.release();
   }
 });
 
 // PUT /api/exercises/:id - Update an exercise
 router.put("/api/exercises/:id", async (req: Request, res: Response) => {
   const exerciseId = parseInt(String(req.params.id), 10);
-  const { name, bodyAreaId } = req.body;
+  const { name, bodyAreaId, equipmentIds = [] } = req.body;
 
   if (!name?.trim()) {
     res.status(400).json({ error: "Exercise name is required" });
@@ -345,20 +378,37 @@ router.put("/api/exercises/:id", async (req: Request, res: Response) => {
     return;
   }
 
+  const client = await pool.connect();
   try {
-    const result = await pool.query<DbExercise & { body_area_name: string }>(
-      `UPDATE exercises SET name = $1, body_area_id = $2 WHERE id = $3
-       RETURNING exercises.*, (SELECT name FROM body_areas WHERE id = $2) as body_area_name`,
+    await client.query("BEGIN");
+    const result = await client.query(
+      "UPDATE exercises SET name = $1, body_area_id = $2 WHERE id = $3 RETURNING id",
       [name.trim(), bodyAreaId, exerciseId]
     );
     if (result.rows.length === 0) {
+      await client.query("ROLLBACK");
       res.status(404).json({ error: "Exercise not found" });
       return;
     }
-    res.json(result.rows[0]);
+
+    await client.query("DELETE FROM exercise_equipment WHERE exercise_id = $1", [
+      exerciseId,
+    ]);
+    if (equipmentIds.length > 0) {
+      await client.query(
+        `INSERT INTO exercise_equipment (exercise_id, equipment_id)
+         SELECT $1, UNNEST($2::int[])`,
+        [exerciseId, equipmentIds]
+      );
+    }
+    await client.query("COMMIT");
+    res.json(await fetchExerciseWithEquipment(exerciseId));
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error("Error updating exercise:", err);
     res.status(500).json({ error: "Failed to update exercise" });
+  } finally {
+    client.release();
   }
 });
 

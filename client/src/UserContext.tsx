@@ -1,12 +1,13 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import type { User } from "./types";
-import { fetchUsers } from "./api";
+import type { User, WorkoutLocation } from "./types";
+import { fetchUsers, setWorkoutLocation } from "./api";
 
 interface UserContextValue {
   user: User | null;
   users: User[];
   setUser: (user: User | null) => void;
   refreshUsers: () => Promise<void>;
+  setLocation: (location: WorkoutLocation) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextValue>({
@@ -14,6 +15,7 @@ const UserContext = createContext<UserContextValue>({
   users: [],
   setUser: () => {},
   refreshUsers: async () => {},
+  setLocation: async () => {},
 });
 
 export function useUser() {
@@ -53,10 +55,22 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setLocation = async (location: WorkoutLocation) => {
+    if (!user) return;
+    const previous = user;
+    setUserState({ ...user, workout_location: location });
+    try {
+      const updated = await setWorkoutLocation(user.id, location);
+      setUserState(updated);
+    } catch {
+      setUserState(previous);
+    }
+  };
+
   if (!loaded) return null;
 
   return (
-    <UserContext.Provider value={{ user, users, setUser, refreshUsers }}>
+    <UserContext.Provider value={{ user, users, setUser, refreshUsers, setLocation }}>
       {children}
     </UserContext.Provider>
   );

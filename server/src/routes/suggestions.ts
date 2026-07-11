@@ -45,7 +45,12 @@ router.get("/api/users/:userId/suggestions", async (req: Request, res: Response)
     // Get suggestions if user has an active plan
     let suggestions: FocusAreaSuggestion[] = [];
     if (user.active_plan_id) {
-      suggestions = await getSuggestions(pool, userId, user.active_plan_id);
+      suggestions = await getSuggestions(
+        pool,
+        userId,
+        user.active_plan_id,
+        user.workout_location
+      );
     }
 
     const response: SuggestionsResponse = { suggestions, activeWorkout };

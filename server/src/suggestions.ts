@@ -4,6 +4,7 @@ import type {
   DbExercise,
   DbFocusArea,
   FocusAreaSuggestion,
+  WorkoutLocation,
 } from "./types";
 
 interface FocusAreaRow extends DbFocusArea {
@@ -30,7 +31,8 @@ interface ExerciseLastDoneRow {
 export async function getSuggestions(
   pool: Pool,
   userId: number,
-  activePlanId: number
+  activePlanId: number,
+  location: WorkoutLocation = "gym"
 ): Promise<FocusAreaSuggestion[]> {
   // 1. Get focus areas for the active plan
   const focusResult = await pool.query<FocusAreaRow>(
@@ -90,10 +92,30 @@ export async function getSuggestions(
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // 4. Get all exercises for the relevant body areas
+  // 4. Get all exercises for the relevant body areas.
+  // At home, drop exercises needing equipment the user doesn't own. Exercises with
+  // no equipment are bodyweight and always available. The gym has everything.
   const exerciseResult = await pool.query<DbExercise>(
-    `SELECT * FROM exercises WHERE body_area_id = ANY($1) ORDER BY body_area_id, is_placeholder, name`,
-    [bodyAreaIds]
+    `SELECT e.*,
+            COALESCE(
+              (SELECT json_agg(json_build_object('id', eq.id, 'name', eq.name) ORDER BY eq.name)
+               FROM exercise_equipment ee
+               JOIN equipment eq ON eq.id = ee.equipment_id
+               WHERE ee.exercise_id = e.id),
+              '[]'::json
+            ) AS equipment
+     FROM exercises e
+     WHERE e.body_area_id = ANY($1)
+       AND ($2 = 'gym' OR NOT EXISTS (
+         SELECT 1 FROM exercise_equipment ee
+         WHERE ee.exercise_id = e.id
+           AND NOT EXISTS (
+             SELECT 1 FROM user_equipment ue
+             WHERE ue.user_id = $3 AND ue.equipment_id = ee.equipment_id
+           )
+       ))
+     ORDER BY e.body_area_id, e.is_placeholder, e.name`,
+    [bodyAreaIds, location, userId]
   );
 
   // 4b. Get days since last done per exercise

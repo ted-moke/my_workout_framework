@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FiEdit2, FiTrash2, FiPlus } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiPlus, FiHome } from "react-icons/fi";
 import {
   fetchExercises,
   fetchBodyAreas,
@@ -9,20 +9,29 @@ import {
   createBodyArea,
   updateBodyArea,
   deleteBodyArea,
+  fetchEquipment,
+  createEquipment,
+  updateEquipment,
+  deleteEquipment,
+  fetchUserEquipment,
+  setUserEquipment,
 } from "../api";
-import type { BodyArea, Exercise } from "../types";
+import { useUser } from "../UserContext";
+import type { BodyArea, Equipment, Exercise } from "../types";
 import { areaColorVar } from "../areaColor";
 import styles from "./Exercises.module.css";
 
 type ExerciseWithArea = Exercise & { body_area_name: string };
 
 export default function Exercises() {
+  const { user } = useUser();
   const [exercises, setExercises] = useState<ExerciseWithArea[]>([]);
   const [bodyAreas, setBodyAreas] = useState<BodyArea[]>([]);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState<number | "new" | null>(null);
   const [editName, setEditName] = useState("");
   const [editBodyAreaId, setEditBodyAreaId] = useState(0);
+  const [editEquipmentIds, setEditEquipmentIds] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
 
   // Body area editing state
@@ -30,27 +39,50 @@ export default function Exercises() {
   const [editAreaName, setEditAreaName] = useState("");
   const [areaError, setAreaError] = useState("");
 
+  // Equipment state
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [ownedIds, setOwnedIds] = useState<number[]>([]);
+  const [homeOnly, setHomeOnly] = useState(false);
+  const [editingEquip, setEditingEquip] = useState<number | "new" | null>(null);
+  const [editEquipName, setEditEquipName] = useState("");
+  const [equipError, setEquipError] = useState("");
+
   useEffect(() => {
     fetchExercises().then(setExercises).catch(() => setError("Failed to load exercises"));
     fetchBodyAreas().then(setBodyAreas).catch(() => {});
-  }, []);
+    fetchEquipment().then(setEquipment).catch(() => {});
+    if (user) {
+      fetchUserEquipment(user.id)
+        .then((owned) => setOwnedIds(owned.map((e) => e.id)))
+        .catch(() => {});
+    }
+  }, [user]);
 
   const startEdit = (ex: ExerciseWithArea) => {
     setEditing(ex.id);
     setEditName(ex.name);
     setEditBodyAreaId(ex.body_area_id);
+    setEditEquipmentIds(ex.equipment.map((e) => e.id));
   };
 
   const startNew = () => {
     setEditing("new");
     setEditName("");
     setEditBodyAreaId(0);
+    setEditEquipmentIds([]);
   };
 
   const cancelEdit = () => {
     setEditing(null);
     setEditName("");
     setEditBodyAreaId(0);
+    setEditEquipmentIds([]);
+  };
+
+  const toggleEditEquipment = (id: number) => {
+    setEditEquipmentIds((prev) =>
+      prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]
+    );
   };
 
   const handleSave = async () => {
@@ -60,15 +92,87 @@ export default function Exercises() {
     setError("");
     try {
       if (editing === "new") {
-        await createExercise(editName.trim(), editBodyAreaId);
+        await createExercise(editName.trim(), editBodyAreaId, editEquipmentIds);
       } else if (typeof editing === "number") {
-        await updateExercise(editing, editName.trim(), editBodyAreaId);
+        await updateExercise(editing, editName.trim(), editBodyAreaId, editEquipmentIds);
       }
       const updated = await fetchExercises();
       setExercises(updated);
       cancelEdit();
     } catch {
       setError("Failed to save exercise");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Equipment handlers
+  const toggleOwned = async (id: number) => {
+    if (!user) return;
+    const previous = ownedIds;
+    const next = ownedIds.includes(id)
+      ? ownedIds.filter((e) => e !== id)
+      : [...ownedIds, id];
+    setOwnedIds(next);
+    setEquipError("");
+    try {
+      await setUserEquipment(user.id, next);
+    } catch {
+      setOwnedIds(previous);
+      setEquipError("Failed to update your equipment");
+    }
+  };
+
+  const startEditEquip = (eq: Equipment) => {
+    setEditingEquip(eq.id);
+    setEditEquipName(eq.name);
+    setEquipError("");
+  };
+
+  const startNewEquip = () => {
+    setEditingEquip("new");
+    setEditEquipName("");
+    setEquipError("");
+  };
+
+  const cancelEditEquip = () => {
+    setEditingEquip(null);
+    setEditEquipName("");
+    setEquipError("");
+  };
+
+  const handleSaveEquip = async () => {
+    if (!editEquipName.trim()) return;
+
+    setBusy(true);
+    setEquipError("");
+    try {
+      if (editingEquip === "new") {
+        await createEquipment(editEquipName.trim());
+      } else if (typeof editingEquip === "number") {
+        await updateEquipment(editingEquip, editEquipName.trim());
+      }
+      setEquipment(await fetchEquipment());
+      // Equipment names are denormalized onto exercises in the list view
+      setExercises(await fetchExercises());
+      cancelEditEquip();
+    } catch (err) {
+      setEquipError(err instanceof Error ? err.message : "Failed to save equipment");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDeleteEquip = async (id: number) => {
+    if (!confirm("Delete this equipment?")) return;
+    setBusy(true);
+    setEquipError("");
+    try {
+      await deleteEquipment(id);
+      setEquipment(await fetchEquipment());
+      setOwnedIds((prev) => prev.filter((e) => e !== id));
+    } catch (err) {
+      setEquipError(err instanceof Error ? err.message : "Failed to delete equipment");
     } finally {
       setBusy(false);
     }
@@ -147,14 +251,23 @@ export default function Exercises() {
     }
   };
 
-  // Group non-placeholder exercises by body area
-  const grouped = exercises.reduce<Record<string, ExerciseWithArea[]>>((acc, ex) => {
-    if (ex.is_placeholder) return acc;
-    const key = ex.body_area_name;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(ex);
-    return acc;
-  }, {});
+  // Group non-placeholder exercises by body area. Every body area gets a group even
+  // when it ends up empty — a gap is worth seeing, especially when filtering to home.
+  const grouped = exercises.reduce<Record<string, ExerciseWithArea[]>>(
+    (acc, ex) => {
+      if (ex.is_placeholder) return acc;
+      if (homeOnly && !ex.equipment.every((eq) => ownedIds.includes(eq.id))) return acc;
+      const key = ex.body_area_name;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(ex);
+      return acc;
+    },
+    Object.fromEntries(
+      [...bodyAreas]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((ba) => [ba.name, [] as ExerciseWithArea[]])
+    )
+  );
 
   if (error) return <div className="error">{error}</div>;
 
@@ -187,6 +300,32 @@ export default function Exercises() {
               ))}
             </select>
           </div>
+          <div className={styles.fieldRow}>
+            <label>Equipment Needed</label>
+            {equipment.length === 0 ? (
+              <p className="muted">No equipment defined yet.</p>
+            ) : (
+              <div className={styles.chipGroup}>
+                {equipment.map((eq) => (
+                  <button
+                    key={eq.id}
+                    type="button"
+                    className={`${styles.chip}${
+                      editEquipmentIds.includes(eq.id) ? ` ${styles.chipSelected}` : ""
+                    }`}
+                    onClick={() => toggleEditEquipment(eq.id)}
+                  >
+                    {eq.name}
+                  </button>
+                ))}
+              </div>
+            )}
+            <p className={styles.fieldHint}>
+              {editEquipmentIds.length === 0
+                ? "Bodyweight — always available at home."
+                : "Only shown at home if you own all of these."}
+            </p>
+          </div>
           <div className={styles.editorActions}>
             <button
               className="btn-primary"
@@ -210,24 +349,53 @@ export default function Exercises() {
       <div className="card">
         <div className={styles.header}>
           <h2>Exercises</h2>
-          <button
-            className={`${styles.iconBtn} ${styles.addBtn}`}
-            onClick={startNew}
-            title="Add exercise"
-          >
-            <FiPlus />
-          </button>
+          <div className={styles.headerActions}>
+            <button
+              className={`${styles.filterBtn}${homeOnly ? ` ${styles.filterBtnActive}` : ""}`}
+              onClick={() => setHomeOnly((v) => !v)}
+              title={
+                homeOnly
+                  ? "Showing only exercises you can do at home"
+                  : "Show only exercises you have the equipment for"
+              }
+            >
+              <FiHome /> Home only
+            </button>
+            <button
+              className={`${styles.iconBtn} ${styles.addBtn}`}
+              onClick={startNew}
+              title="Add exercise"
+            >
+              <FiPlus />
+            </button>
+          </div>
         </div>
-        {exercises.length === 0 ? (
+        {homeOnly && ownedIds.length === 0 && (
+          <p className="muted">
+            You haven't marked any equipment as owned yet — only bodyweight exercises
+            will show. Check your gear under Equipment below.
+          </p>
+        )}
+        {Object.keys(grouped).length === 0 ? (
           <p className="muted">No exercises yet. Tap + to create one.</p>
         ) : (
           <div className={styles.exerciseList}>
             {Object.entries(grouped).map(([areaName, exs]) => (
               <div key={areaName} className={styles.group}>
                 <div className={styles.groupLabel} style={{ color: areaColorVar(areaName) }}>{areaName}</div>
+                {exs.length === 0 && (
+                  <div className={styles.emptyGroup}>No exercises found</div>
+                )}
                 {exs.map((ex) => (
                   <div key={ex.id} className={styles.exerciseRow}>
-                    <span className={styles.exerciseName}>{ex.name}</span>
+                    <div className={styles.exerciseInfo}>
+                      <span className={styles.exerciseName}>{ex.name}</span>
+                      {ex.equipment.length > 0 && (
+                        <span className={styles.exerciseEquipment}>
+                          {ex.equipment.map((eq) => eq.name).join(", ")}
+                        </span>
+                      )}
+                    </div>
                     <div className={styles.rowActions}>
                       <button
                         className={styles.iconBtn}
@@ -346,6 +514,116 @@ export default function Exercises() {
                 Save
               </button>
               <button className="btn-abort" onClick={cancelEditArea} disabled={busy}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="card">
+        <div className={styles.header}>
+          <h2>Equipment</h2>
+          <button
+            className={`${styles.iconBtn} ${styles.addBtn}`}
+            onClick={startNewEquip}
+            title="Add equipment"
+          >
+            <FiPlus />
+          </button>
+        </div>
+        <p className="muted">
+          Check what you own at home. In Home mode you'll only see exercises you have
+          the equipment for. The gym is assumed to have everything.
+        </p>
+        {equipError && <p className="error">{equipError}</p>}
+        {equipment.length === 0 ? (
+          <p className="muted">No equipment yet. Tap + to create some.</p>
+        ) : (
+          <div className={styles.exerciseList}>
+            {equipment.map((eq) => (
+              <div key={eq.id} className={styles.exerciseRow}>
+                {editingEquip === eq.id ? (
+                  <div className={styles.inlineEdit}>
+                    <input
+                      type="text"
+                      value={editEquipName}
+                      onChange={(e) => setEditEquipName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveEquip();
+                        if (e.key === "Escape") cancelEditEquip();
+                      }}
+                      autoFocus
+                    />
+                    <div className={styles.rowActions}>
+                      <button
+                        className="btn-primary"
+                        onClick={handleSaveEquip}
+                        disabled={busy || !editEquipName.trim()}
+                      >
+                        Save
+                      </button>
+                      <button className="btn-abort" onClick={cancelEditEquip} disabled={busy}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <label className={styles.ownedLabel}>
+                      <input
+                        type="checkbox"
+                        checked={ownedIds.includes(eq.id)}
+                        onChange={() => toggleOwned(eq.id)}
+                      />
+                      <span className={styles.exerciseName}>{eq.name}</span>
+                    </label>
+                    <div className={styles.rowActions}>
+                      <button
+                        className={styles.iconBtn}
+                        onClick={() => startEditEquip(eq)}
+                        disabled={busy}
+                        title="Edit"
+                      >
+                        <FiEdit2 />
+                      </button>
+                      <button
+                        className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                        onClick={() => handleDeleteEquip(eq.id)}
+                        disabled={busy}
+                        title="Delete"
+                      >
+                        <FiTrash2 />
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        {editingEquip === "new" && (
+          <div className={styles.inlineEdit}>
+            <input
+              type="text"
+              value={editEquipName}
+              onChange={(e) => setEditEquipName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSaveEquip();
+                if (e.key === "Escape") cancelEditEquip();
+              }}
+              placeholder="Equipment name"
+              autoFocus
+            />
+            <div className={styles.rowActions}>
+              <button
+                className="btn-primary"
+                onClick={handleSaveEquip}
+                disabled={busy || !editEquipName.trim()}
+              >
+                Save
+              </button>
+              <button className="btn-abort" onClick={cancelEditEquip} disabled={busy}>
                 Cancel
               </button>
             </div>
