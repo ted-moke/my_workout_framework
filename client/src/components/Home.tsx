@@ -34,6 +34,21 @@ function avgPtsPerWorkout(logs: WorkoutWithSets[], ptsTypeByArea: Map<string, st
   return total / logs.length;
 }
 
+function pointsFilled(suggestions: FocusAreaSuggestion[]): {
+  filled: number;
+  total: number;
+} {
+  return suggestions.reduce(
+    (acc, s) => {
+      const unit = s.focusArea.ptsType === "active_minutes" ? 15 : 1;
+      const goal = s.focusArea.ptsPerPeriod / unit;
+      const filled = Math.min(s.ptsFulfilled / unit, goal);
+      return { filled: acc.filled + filled, total: acc.total + goal };
+    },
+    { filled: 0, total: 0 }
+  );
+}
+
 function currentStreak(logs: WorkoutWithSets[]): number {
   if (logs.length === 0) return 0;
 
@@ -106,6 +121,7 @@ export default function Home({
   const ptsTypeByArea = new Map<string, string>(
     suggestions.map((s) => [s.focusArea.bodyArea.name, s.focusArea.ptsType])
   );
+  const { filled, total } = pointsFilled(suggestions);
   // const allAreas = [...suggestions].sort(
   //   (a, b) => {
   //     if (b.daysSinceLast == null && a.daysSinceLast == null) {
@@ -179,23 +195,29 @@ export default function Home({
         </button>
       </div>
 
-      <History refreshKey={refreshKey} />
-
       {suggestions.length > 0 ? (
         <div className="card">
           <h2>Progress</h2>
-          {history.length > 0 && (
-            <div className={styles.statsRow}>
-              <div className={styles.statItem}>
-                <span className={styles.statValue}>{avgPtsPerWorkout(history, ptsTypeByArea).toFixed(1)}</span>
-                <span className={styles.statLabel}>pts / workout</span>
-              </div>
-              <div className={styles.statItem}>
-                <span className={styles.statValue}>{workoutsThisWeek(history)}</span>
-                <span className={styles.statLabel}>workouts / week</span>
-              </div>
+          <div className={styles.statsRow}>
+            <div className={styles.statItem}>
+              <span className={styles.statValue}>
+                {Math.round(filled)} / {Math.round(total)}
+              </span>
+              <span className={styles.statLabel}>points filled</span>
             </div>
-          )}
+            {history.length > 0 && (
+              <>
+                <div className={styles.statItem}>
+                  <span className={styles.statValue}>{avgPtsPerWorkout(history, ptsTypeByArea).toFixed(1)}</span>
+                  <span className={styles.statLabel}>pts / workout</span>
+                </div>
+                <div className={styles.statItem}>
+                  <span className={styles.statValue}>{workoutsThisWeek(history)}</span>
+                  <span className={styles.statLabel}>workouts / week</span>
+                </div>
+              </>
+            )}
+          </div>
           <div className={styles.progressList}>
             {allAreas.map((s) => {
               const areaColor = areaColorVar(s.focusArea.bodyArea.name);
@@ -226,6 +248,7 @@ export default function Home({
         </div>
       )}
 
+      <History refreshKey={refreshKey} />
     </div>
   );
 }
