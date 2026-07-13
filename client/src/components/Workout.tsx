@@ -14,6 +14,8 @@ import type { FocusAreaSuggestion, SetWithDetails, Workout as WorkoutType } from
 import { areaColorVar, registerAreaColor } from "../areaColor";
 import FocusAreaCard from "./FocusAreaCard";
 import PointCubes from "./PointCubes";
+import Progress from "./Progress";
+import History from "./History";
 import styles from "./Workout.module.css";
 
 function todayStr(): string {
@@ -21,11 +23,7 @@ function todayStr(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export default function Workout({
-  onWorkoutChange,
-}: {
-  onWorkoutChange?: () => void;
-}) {
+export default function Workout() {
   const { user } = useUser();
   const [suggestions, setSuggestions] = useState<FocusAreaSuggestion[]>([]);
   const [activeWorkout, setActiveWorkout] = useState<WorkoutType | null>(null);
@@ -34,6 +32,7 @@ export default function Workout({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const load = useCallback(() => {
     if (!user) return;
@@ -83,7 +82,7 @@ export default function Workout({
     setError("");
     try {
       await finishWorkout(activeWorkout.id);
-      onWorkoutChange?.();
+      setRefreshKey((k) => k + 1);
       setWorkoutDate(todayStr());
       load();
     } catch {
@@ -100,7 +99,7 @@ export default function Workout({
     setError("");
     try {
       await abortWorkout(activeWorkout.id);
-      onWorkoutChange?.();
+      setRefreshKey((k) => k + 1);
       setWorkoutDate(todayStr());
       load();
     } catch {
@@ -174,6 +173,7 @@ export default function Workout({
             Set up a workout plan in the Plans tab to get started.
           </p>
         </div>
+        <History refreshKey={refreshKey} />
       </div>
     );
   }
@@ -245,7 +245,7 @@ export default function Workout({
         )}
 
         <div className={styles.exerciseList}>
-          {suggestions.map((s, i) => (
+          {suggestions.map((s) => (
             <FocusAreaCard
               key={s.focusArea.id}
               suggestion={s}
@@ -259,6 +259,10 @@ export default function Workout({
           ))}
         </div>
       </div>
+
+      <Progress suggestions={suggestions} refreshKey={refreshKey} />
+
+      <History refreshKey={refreshKey} />
     </div>
   );
 }
