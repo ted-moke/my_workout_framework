@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
-import type { FocusAreaSuggestion, SetWithDetails } from "../types";
+import type { FocusAreaSuggestion, SetDetails, SetWithDetails } from "../types";
 import ExerciseRow from "./ExerciseRow";
 import PointCubes from "./PointCubes";
 import { areaColorVar } from "../areaColor";
@@ -14,6 +14,7 @@ interface Props {
   onAddSet: (exerciseId: number, pts: number) => void;
   onRemoveSet: (setId: number) => void;
   onUpdateSet: (setId: number, pts: number) => void;
+  onUpdateSetDetails: (setId: number, changes: SetDetails) => void;
 }
 
 export default function FocusAreaCard({
@@ -24,6 +25,7 @@ export default function FocusAreaCard({
   onAddSet,
   onRemoveSet,
   onUpdateSet,
+  onUpdateSetDetails,
 }: Props) {
   const [open, setOpen] = useState(defaultOpen);
   const { focusArea, ptsFulfilled } = suggestion;
@@ -135,6 +137,7 @@ export default function FocusAreaCard({
               isActive={isActive}
               onAddSet={onAddSet}
               onRemoveSet={onRemoveSet}
+              onUpdateSetDetails={onUpdateSetDetails}
             />
           ))}
         </div>

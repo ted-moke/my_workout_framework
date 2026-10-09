@@ -60,6 +60,13 @@ export interface WorkoutSet {
   workout_id: number;
   exercise_id: number;
   pts: number;
+  weight: number | null;
+  reps: number | null;
+}
+
+export interface SetDetails {
+  weight?: number | null;
+  reps?: number | null;
 }
 
 // API response types

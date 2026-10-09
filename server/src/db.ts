@@ -1,4 +1,7 @@
-import { Pool } from "pg";
+import { Pool, types } from "pg";
+
+// Return NUMERIC columns (e.g. sets.weight) as JS numbers instead of strings.
+types.setTypeParser(types.builtins.NUMERIC, (v) => parseFloat(v));
 
 const CONNECTION_TIMEOUT_MS = 5000; // 5 seconds
 

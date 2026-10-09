@@ -6,8 +6,21 @@
   padding: 0.5rem 0.75rem;
 }
 
-.exerciseRow + .exerciseRow {
+.exerciseItem + .exerciseItem {
   border-top: 1px solid var(--border-subtle);
+}
+
+.setDetailsRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0 0.75rem 0.5rem;
+}
+
+.setDetailsLabel {
+  font-size: var(--font-sm);
+  color: var(--text-tertiary);
 }
 
 .exerciseName {

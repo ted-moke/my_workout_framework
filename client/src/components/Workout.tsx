@@ -10,7 +10,7 @@ import {
   updateSet,
 } from "../api";
 import { useUser } from "../UserContext";
-import type { FocusAreaSuggestion, SetWithDetails, Workout as WorkoutType } from "../types";
+import type { FocusAreaSuggestion, SetDetails, SetWithDetails, Workout as WorkoutType } from "../types";
 import { areaColorVar, registerAreaColor } from "../areaColor";
 import FocusAreaCard from "./FocusAreaCard";
 import PointCubes from "./PointCubes";
@@ -147,7 +147,18 @@ export default function Workout() {
     const prevSets = sets;
     setSets((prev) => prev.map((s) => s.id === setId ? { ...s, pts } : s));
     try {
-      await updateSet(setId, pts);
+      await updateSet(setId, { pts });
+    } catch {
+      setSets(prevSets);
+      setError("Failed to update set");
+    }
+  };
+
+  const handleUpdateSetDetails = async (setId: number, changes: SetDetails) => {
+    const prevSets = sets;
+    setSets((prev) => prev.map((s) => s.id === setId ? { ...s, ...changes } : s));
+    try {
+      await updateSet(setId, changes);
     } catch {
       setSets(prevSets);
       setError("Failed to update set");
@@ -255,6 +266,7 @@ export default function Workout() {
               onAddSet={handleAddSet}
               onRemoveSet={handleRemoveSet}
               onUpdateSet={handleUpdateSet}
+              onUpdateSetDetails={handleUpdateSetDetails}
             />
           ))}
         </div>

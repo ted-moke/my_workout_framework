@@ -56,6 +56,8 @@ export interface DbSet {
   workout_id: number;
   exercise_id: number;
   pts: number;
+  weight: number | null;
+  reps: number | null;
 }
 
 // API response types
@@ -98,6 +100,8 @@ export interface SetWithDetails {
   workout_id: number;
   exercise_id: number;
   pts: number;
+  weight: number | null;
+  reps: number | null;
   exercise_name: string;
   body_area_name: string;
 }

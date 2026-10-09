@@ -1,0 +1,26 @@
+.setDetails {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.detailInput {
+  width: 3.5rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  padding: 0.2rem 0.35rem;
+  font-size: var(--font-md);
+  text-align: center;
+}
+
+.detailInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.detailUnit {
+  font-size: var(--font-sm);
+  color: var(--text-faint);
+}

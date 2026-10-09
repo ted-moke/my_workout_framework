@@ -20,10 +20,13 @@ import { useUser } from '../UserContext'
 import type {
   WorkoutWithSets,
   SetWithDetails,
+  SetDetails,
   Exercise,
   PtsType
 } from '../types'
 import { areaColorVar } from '../areaColor'
+import { formatSetDetails } from '../setDetails'
+import SetDetailsInputs from './SetDetailsInputs'
 import styles from './History.module.css'
 
 function formatDate (dateStr: string): string {
@@ -58,26 +61,38 @@ function formatShortDate (dateStr: string): string {
   return `${diffDays}d`
 }
 
+interface ExerciseSummary {
+  name: string
+  // Formatted weight/reps of each set that has them, e.g. "135 lb × 8"
+  details: string[]
+}
+
 function groupSetsByArea (
   workout: WorkoutWithSets
-): { area: string; totalPts: number; exercises: string[] }[] {
+): { area: string; totalPts: number; exercises: ExerciseSummary[] }[] {
   const grouped = new Map<
     string,
-    { totalPts: number; exercises: Set<string> }
+    { totalPts: number; exercises: Map<string, ExerciseSummary> }
   >()
   for (const s of workout.sets) {
     const entry = grouped.get(s.body_area_name) ?? {
       totalPts: 0,
-      exercises: new Set<string>()
+      exercises: new Map<string, ExerciseSummary>()
     }
     entry.totalPts += s.pts
-    entry.exercises.add(s.exercise_name)
+    const exercise = entry.exercises.get(s.exercise_name) ?? {
+      name: s.exercise_name,
+      details: []
+    }
+    const details = formatSetDetails(s)
+    if (details) exercise.details.push(details)
+    entry.exercises.set(s.exercise_name, exercise)
     grouped.set(s.body_area_name, entry)
   }
   return Array.from(grouped.entries()).map(([area, data]) => ({
     area,
     totalPts: data.totalPts,
-    exercises: Array.from(data.exercises)
+    exercises: Array.from(data.exercises.values())
   }))
 }
 
@@ -172,17 +187,17 @@ export default function History ({ refreshKey }: { refreshKey?: number }) {
   const handleUpdateSet = async (
     workoutId: number,
     setId: number,
-    newPts: number
+    changes: { pts?: number } & SetDetails
   ) => {
     try {
-      await updateSet(setId, newPts)
+      await updateSet(setId, changes)
       setLogs(prev =>
         prev.map(w =>
           w.id === workoutId
             ? {
                 ...w,
                 sets: w.sets.map(s =>
-                  s.id === setId ? { ...s, pts: newPts } : s
+                  s.id === setId ? { ...s, ...changes } : s
                 )
               }
             : w
@@ -344,7 +359,18 @@ export default function History ({ refreshKey }: { refreshKey?: number }) {
                         </span>
                       </div>
                       <div className={styles.historyExercises}>
-                        {a.exercises.join(', ')}
+                        {a.exercises.map((ex, i) => (
+                          <Fragment key={ex.name}>
+                            {i > 0 && ', '}
+                            {ex.name}
+                            {ex.details.length > 0 && (
+                              <span className={styles.historySetDetails}>
+                                {' '}
+                                ({ex.details.join(', ')})
+                              </span>
+                            )}
+                          </Fragment>
+                        ))}
                       </div>
                     </div>
                   ))}
@@ -381,7 +407,7 @@ export default function History ({ refreshKey }: { refreshKey?: number }) {
                             onBlur={e => {
                               const val = parseInt(e.target.value, 10)
                               if (!isNaN(val) && val >= 0 && val !== s.pts) {
-                                handleUpdateSet(log.id, s.id, val)
+                                handleUpdateSet(log.id, s.id, { pts: val })
                               }
                             }}
                             onKeyDown={e => {
@@ -400,6 +426,15 @@ export default function History ({ refreshKey }: { refreshKey?: number }) {
                           >
                             <FiX />
                           </button>
+                          <div className={styles.historyEditSetDetails}>
+                            <SetDetailsInputs
+                              weight={s.weight}
+                              reps={s.reps}
+                              onChange={changes =>
+                                handleUpdateSet(log.id, s.id, changes)
+                              }
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
