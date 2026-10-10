@@ -28,3 +28,6 @@ Thumbs.db
 
 # PM2
 .pm2/
+
+# Database dumps taken by scripts/deploy.sh
+backup/backup-pre-deploy-*.sql

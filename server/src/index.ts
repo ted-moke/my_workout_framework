@@ -23,6 +23,8 @@ if (isProduction) {
   app.get("*", (req, res) => {
     if (!req.path.startsWith("/api")) {
       res.sendFile(path.join(clientDistPath, "index.html"));
+    } else {
+      res.status(404).json({ error: "Not found" });
     }
   });
 }
