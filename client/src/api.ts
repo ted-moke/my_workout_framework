@@ -7,6 +7,7 @@ import type {
   WorkoutLocation,
   WorkoutSet,
   SetDetails,
+  ExerciseStats,
   SuggestionsResponse,
   PlanWithFocusAreas,
   WorkoutWithSets,
@@ -217,6 +218,15 @@ export function deleteExercise(id: number): Promise<void> {
 export function fetchSuggestions(userId: number): Promise<SuggestionsResponse> {
   return fetch(`${BASE}/users/${userId}/suggestions`).then((r) =>
     json<SuggestionsResponse>(r)
+  );
+}
+
+// Keyed by exercise id; exercises without recorded weight/reps are absent.
+export function fetchExerciseStats(
+  userId: number
+): Promise<Record<number, ExerciseStats>> {
+  return fetch(`${BASE}/users/${userId}/exercise-stats`).then((r) =>
+    json<Record<number, ExerciseStats>>(r)
   );
 }
 

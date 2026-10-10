@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { FiPlay, FiCheck, FiTrash2 } from "react-icons/fi";
 import {
   fetchSuggestions,
+  fetchExerciseStats,
   startWorkout,
   finishWorkout,
   abortWorkout,
@@ -10,7 +11,7 @@ import {
   updateSet,
 } from "../api";
 import { useUser } from "../UserContext";
-import type { FocusAreaSuggestion, SetDetails, SetWithDetails, Workout as WorkoutType } from "../types";
+import type { ExerciseStats, FocusAreaSuggestion, SetDetails, SetWithDetails, Workout as WorkoutType } from "../types";
 import { areaColorVar, registerAreaColor } from "../areaColor";
 import FocusAreaCard from "./FocusAreaCard";
 import PointCubes from "./PointCubes";
@@ -28,6 +29,7 @@ export default function Workout() {
   const [suggestions, setSuggestions] = useState<FocusAreaSuggestion[]>([]);
   const [activeWorkout, setActiveWorkout] = useState<WorkoutType | null>(null);
   const [sets, setSets] = useState<SetWithDetails[]>([]);
+  const [exerciseStats, setExerciseStats] = useState<Record<number, ExerciseStats>>({});
   const [workoutDate, setWorkoutDate] = useState(todayStr());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -53,6 +55,10 @@ export default function Workout() {
       })
       .catch(() => setError("Failed to load suggestions"))
       .finally(() => setLoading(false));
+    // Past weight/reps are nice-to-have; the workout works without them.
+    fetchExerciseStats(user.id)
+      .then(setExerciseStats)
+      .catch(() => setExerciseStats({}));
   }, [user]);
 
   useEffect(() => {
@@ -261,6 +267,7 @@ export default function Workout() {
               key={s.focusArea.id}
               suggestion={s}
               sets={sets}
+              stats={exerciseStats}
               isActive={isActive}
               defaultOpen={false}
               onAddSet={handleAddSet}

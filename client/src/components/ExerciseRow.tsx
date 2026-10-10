@@ -1,10 +1,12 @@
-import type { Exercise, SetDetails, SetWithDetails, PtsType } from "../types";
+import type { Exercise, ExerciseStats, SetDetails, SetWithDetails, PtsType } from "../types";
+import { formatSetDetails, formatShortDay } from "../setDetails";
 import SetDetailsInputs from "./SetDetailsInputs";
 import styles from "./ExerciseRow.module.css";
 
 interface Props {
   exercise: Exercise;
   sets: SetWithDetails[];
+  stats?: ExerciseStats;
   ptsType: PtsType;
   isActive: boolean;
   onAddSet: (exerciseId: number, pts: number) => void;
@@ -15,6 +17,7 @@ interface Props {
 export default function ExerciseRow({
   exercise,
   sets,
+  stats,
   ptsType,
   isActive,
   onAddSet,
@@ -67,6 +70,26 @@ export default function ExerciseRow({
           </div>
         )}
       </div>
+      {stats && (
+        <div className={styles.exerciseStats}>
+          <div className={styles.statLine}>
+            <span className={styles.statLabel}>Max</span>
+            <span className={styles.statValue}>{formatSetDetails(stats.max)}</span>
+            <span className={styles.statDate}>{formatShortDay(stats.max.date)}</span>
+          </div>
+          {stats.last && (
+            <div className={styles.statLine}>
+              <span className={styles.statLabel}>
+                {stats.last.isPrevious ? "Previous" : "Last"}
+              </span>
+              <span className={styles.statValue}>
+                {stats.last.sets.map(formatSetDetails).join(", ")}
+              </span>
+              <span className={styles.statDate}>{formatShortDay(stats.last.date)}</span>
+            </div>
+          )}
+        </div>
+      )}
       {loggedSets.map((s) => (
         <div key={s.id} className={styles.setDetailsRow}>
           <span className={styles.setDetailsLabel}>

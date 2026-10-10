@@ -12,6 +12,15 @@ export function formatSetDetails({ weight, reps }: SetDetails): string {
   return "";
 }
 
+// "Oct 8" from a YYYY-MM-DD date, read as a local date.
+export function formatShortDay(date: string): string {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+}
+
 // Parse an input's text into a field value: "" clears it, invalid input yields undefined.
 export function parseDetailInput(text: string, integer: boolean): number | null | undefined {
   const trimmed = text.trim();

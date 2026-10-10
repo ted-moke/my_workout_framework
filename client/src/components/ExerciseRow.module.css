@@ -68,3 +68,35 @@
   background: var(--color-primary-hover);
   border-color: var(--color-primary-hover);
 }
+
+.exerciseStats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0 0.75rem 0.5rem;
+}
+
+.statLine {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: var(--font-sm);
+}
+
+.statLabel {
+  width: 4.25rem;
+  flex-shrink: 0;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.statValue {
+  flex: 1;
+  color: var(--text-secondary);
+}
+
+.statDate {
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
