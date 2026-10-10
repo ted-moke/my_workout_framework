@@ -6,6 +6,8 @@ import type {
   Workout,
   WorkoutLocation,
   WorkoutSet,
+  SetDetails,
+  ExerciseStats,
   SuggestionsResponse,
   PlanWithFocusAreas,
   WorkoutWithSets,
@@ -219,6 +221,15 @@ export function fetchSuggestions(userId: number): Promise<SuggestionsResponse> {
   );
 }
 
+// Keyed by exercise id; exercises without recorded weight/reps are absent.
+export function fetchExerciseStats(
+  userId: number
+): Promise<Record<number, ExerciseStats>> {
+  return fetch(`${BASE}/users/${userId}/exercise-stats`).then((r) =>
+    json<Record<number, ExerciseStats>>(r)
+  );
+}
+
 // --- Workouts ---
 
 export function startWorkout(userId: number, workoutDate?: string): Promise<Workout> {
@@ -276,12 +287,13 @@ export function fetchHistory(userId: number): Promise<WorkoutWithSets[]> {
 export function addSet(
   workoutId: number,
   exerciseId: number,
-  pts: number
+  pts: number,
+  details: SetDetails = {}
 ): Promise<WorkoutSet> {
   return fetch(`${BASE}/workouts/${workoutId}/sets`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ exerciseId, pts }),
+    body: JSON.stringify({ exerciseId, pts, ...details }),
   }).then((r) => json<WorkoutSet>(r));
 }
 
@@ -291,10 +303,14 @@ export function removeSet(setId: number): Promise<void> {
   });
 }
 
-export function updateSet(setId: number, pts: number): Promise<WorkoutSet> {
+// Omitted fields are left unchanged; weight/reps may be null to clear them.
+export function updateSet(
+  setId: number,
+  changes: { pts?: number } & SetDetails
+): Promise<WorkoutSet> {
   return fetch(`${BASE}/sets/${setId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ pts }),
+    body: JSON.stringify(changes),
   }).then((r) => json<WorkoutSet>(r));
 }

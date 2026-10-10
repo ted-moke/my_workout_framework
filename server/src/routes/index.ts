@@ -5,6 +5,7 @@ import workoutsRouter from "./workouts";
 import setsRouter from "./sets";
 import suggestionsRouter from "./suggestions";
 import equipmentRouter from "./equipment";
+import exerciseStatsRouter from "./exerciseStats";
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use(workoutsRouter);
 router.use(setsRouter);
 router.use(suggestionsRouter);
 router.use(equipmentRouter);
+router.use(exerciseStatsRouter);
 
 export default router;

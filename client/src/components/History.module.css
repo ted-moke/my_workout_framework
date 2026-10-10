@@ -93,6 +93,10 @@
   margin-top: 0.125rem;
 }
 
+.historySetDetails {
+  color: var(--text-tertiary);
+}
+
 .historyFullDate {
   display: flex;
   align-items: center;
@@ -141,9 +145,16 @@
 
 .historyEditSet {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   padding: 0.25rem 0;
+}
+
+.historyEditSetDetails {
+  flex-basis: 100%;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .historyEditSetName {

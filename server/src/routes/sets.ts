@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import pool from "../db";
 import type { DbSet } from "../types";
+import { parseSetFields } from "../setFields";
 
 const router = Router();
 
@@ -11,6 +12,12 @@ router.post("/api/workouts/:workoutId/sets", async (req: Request, res: Response)
 
   if (!exerciseId || pts == null || pts < 0) {
     res.status(400).json({ error: "exerciseId and pts are required" });
+    return;
+  }
+
+  const { fields, error } = parseSetFields(req.body);
+  if (error) {
+    res.status(400).json({ error });
     return;
   }
 
@@ -26,8 +33,9 @@ router.post("/api/workouts/:workoutId/sets", async (req: Request, res: Response)
     }
 
     const result = await pool.query<DbSet>(
-      "INSERT INTO sets (workout_id, exercise_id, pts) VALUES ($1, $2, $3) RETURNING *",
-      [workoutId, exerciseId, pts]
+      `INSERT INTO sets (workout_id, exercise_id, pts, weight, reps)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [workoutId, exerciseId, pts, fields.weight ?? null, fields.reps ?? null]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -36,20 +44,38 @@ router.post("/api/workouts/:workoutId/sets", async (req: Request, res: Response)
   }
 });
 
-// PUT /api/sets/:id - Update pts on a set
+// PUT /api/sets/:id - Update pts, weight and/or reps on a set.
+// Omitted fields are left unchanged; weight/reps may be null to clear them.
 router.put("/api/sets/:id", async (req: Request, res: Response) => {
   const setId = parseInt(String(req.params.id), 10);
   const { pts } = req.body as { pts?: number };
 
-  if (pts == null || pts < 0) {
-    res.status(400).json({ error: "pts is required" });
+  if (pts !== undefined && (pts == null || pts < 0)) {
+    res.status(400).json({ error: "pts must be a non-negative number" });
+    return;
+  }
+
+  const { fields, error } = parseSetFields(req.body);
+  if (error) {
+    res.status(400).json({ error });
+    return;
+  }
+
+  const updates: [string, unknown][] = [];
+  if (pts !== undefined) updates.push(["pts", pts]);
+  if (fields.weight !== undefined) updates.push(["weight", fields.weight]);
+  if (fields.reps !== undefined) updates.push(["reps", fields.reps]);
+
+  if (updates.length === 0) {
+    res.status(400).json({ error: "Nothing to update: send pts, weight or reps" });
     return;
   }
 
   try {
+    const assignments = updates.map(([col], i) => `${col} = $${i + 1}`).join(", ");
     const result = await pool.query<DbSet>(
-      "UPDATE sets SET pts = $1 WHERE id = $2 RETURNING *",
-      [pts, setId]
+      `UPDATE sets SET ${assignments} WHERE id = $${updates.length + 1} RETURNING *`,
+      [...updates.map(([, v]) => v), setId]
     );
     if (result.rows.length === 0) {
       res.status(404).json({ error: "Set not found" });

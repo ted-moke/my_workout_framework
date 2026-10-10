@@ -60,6 +60,26 @@ export interface WorkoutSet {
   workout_id: number;
   exercise_id: number;
   pts: number;
+  weight: number | null;
+  reps: number | null;
+}
+
+export interface StatSet {
+  weight: number | null;
+  reps: number | null;
+}
+
+// Past weight/reps for one exercise, from finished workouts only.
+export interface ExerciseStats {
+  max: StatSet & { date: string };
+  // Most recent workout's sets, or the one before it when that workout holds
+  // the max (isPrevious = true).
+  last: { date: string; sets: StatSet[]; isPrevious: boolean } | null;
+}
+
+export interface SetDetails {
+  weight?: number | null;
+  reps?: number | null;
 }
 
 // API response types

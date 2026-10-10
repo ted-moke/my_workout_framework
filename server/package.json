@@ -7,7 +7,10 @@
     "seed": "tsx src/seed.ts",
     "seed:prod": "node dist/seed.js",
     "build": "rm -rf dist && tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "tsx --test src/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "migrate": "tsx src/migrate.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",

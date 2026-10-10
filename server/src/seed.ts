@@ -100,7 +100,9 @@ async function seed() {
         id SERIAL PRIMARY KEY,
         workout_id INT NOT NULL REFERENCES workouts(id) ON DELETE CASCADE,
         exercise_id INT NOT NULL REFERENCES exercises(id),
-        pts INT NOT NULL
+        pts INT NOT NULL,
+        weight NUMERIC(7, 2) CHECK (weight IS NULL OR weight >= 0),
+        reps INT CHECK (reps IS NULL OR reps >= 0)
       );
     `);
 

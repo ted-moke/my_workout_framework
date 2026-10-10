@@ -1,22 +1,28 @@
-import type { Exercise, SetWithDetails, PtsType } from "../types";
+import type { Exercise, ExerciseStats, SetDetails, SetWithDetails, PtsType } from "../types";
+import { formatSetDetails, formatShortDay } from "../setDetails";
+import SetDetailsInputs from "./SetDetailsInputs";
 import styles from "./ExerciseRow.module.css";
 
 interface Props {
   exercise: Exercise;
   sets: SetWithDetails[];
+  stats?: ExerciseStats;
   ptsType: PtsType;
   isActive: boolean;
   onAddSet: (exerciseId: number, pts: number) => void;
   onRemoveSet: (setId: number) => void;
+  onUpdateSetDetails: (setId: number, changes: SetDetails) => void;
 }
 
 export default function ExerciseRow({
   exercise,
   sets,
+  stats,
   ptsType,
   isActive,
   onAddSet,
   onRemoveSet,
+  onUpdateSetDetails,
 }: Props) {
   const exerciseSets = sets.filter((s) => s.exercise_id === exercise.id);
 
@@ -35,29 +41,67 @@ export default function ExerciseRow({
 
   const presets = ptsType === "active_minutes" ? [15, 30, 45, 60] : [1, 2, 3];
 
+  const loggedSets = isActive
+    ? [...exerciseSets].sort((a, b) => a.pts - b.pts)
+    : [];
+
   return (
-    <div className={styles.exerciseRow}>
-      <span className={styles.exerciseName}>
-        {exercise.name}
-        {exercise.daysSinceLast != null ? (
-          <span className={styles.daysSince}>{exercise.daysSinceLast}d</span>
-        ) : (
-          <span className={styles.daysSince}>new</span>
+    <div className={styles.exerciseItem}>
+      <div className={styles.exerciseRow}>
+        <span className={styles.exerciseName}>
+          {exercise.name}
+          {exercise.daysSinceLast != null ? (
+            <span className={styles.daysSince}>{exercise.daysSinceLast}d</span>
+          ) : (
+            <span className={styles.daysSince}>new</span>
+          )}
+        </span>
+        {isActive && (
+          <div className={styles.exerciseButtons}>
+            {presets.map((p) => (
+              <button
+                key={p}
+                className={`${styles.ptsBtn}${selectedPts.has(p) ? ` ${styles.ptsBtnSelected}` : ""}`}
+                onClick={() => handleToggle(p)}
+              >
+                {ptsType === "active_minutes" ? `${p}m` : p}
+              </button>
+            ))}
+          </div>
         )}
-      </span>
-      {isActive && (
-        <div className={styles.exerciseButtons}>
-          {presets.map((p) => (
-            <button
-              key={p}
-              className={`${styles.ptsBtn}${selectedPts.has(p) ? ` ${styles.ptsBtnSelected}` : ""}`}
-              onClick={() => handleToggle(p)}
-            >
-              {ptsType === "active_minutes" ? `${p}m` : p}
-            </button>
-          ))}
+      </div>
+      {stats && (
+        <div className={styles.exerciseStats}>
+          <div className={styles.statLine}>
+            <span className={styles.statLabel}>Max</span>
+            <span className={styles.statValue}>{formatSetDetails(stats.max)}</span>
+            <span className={styles.statDate}>{formatShortDay(stats.max.date)}</span>
+          </div>
+          {stats.last && (
+            <div className={styles.statLine}>
+              <span className={styles.statLabel}>
+                {stats.last.isPrevious ? "Previous" : "Last"}
+              </span>
+              <span className={styles.statValue}>
+                {stats.last.sets.map(formatSetDetails).join(", ")}
+              </span>
+              <span className={styles.statDate}>{formatShortDay(stats.last.date)}</span>
+            </div>
+          )}
         </div>
       )}
+      {loggedSets.map((s) => (
+        <div key={s.id} className={styles.setDetailsRow}>
+          <span className={styles.setDetailsLabel}>
+            {ptsType === "active_minutes" ? `${s.pts}m` : `${s.pts}pt`}
+          </span>
+          <SetDetailsInputs
+            weight={s.weight}
+            reps={s.reps}
+            onChange={(changes) => onUpdateSetDetails(s.id, changes)}
+          />
+        </div>
+      ))}
     </div>
   );
 }
