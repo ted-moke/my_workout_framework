@@ -2,6 +2,56 @@
 
 This application can be deployed in two ways: using Docker (recommended for VPS/cloud) or directly on shared hosting without Docker.
 
+## Current Production Setup
+
+Production runs on the home machine as the Docker Compose project `workout-tracker`, started from the checkout at `~/dev/workout-tracker` (`docker-compose.yml`):
+
+| Service | What it is |
+|---------|------------|
+| `db` | `postgres:16-alpine`, data in the `workout-tracker_pgdata` volume, host port 5432 |
+| `app` | Image built from the root `Dockerfile` (client + server), host port 7000 → 3001 |
+| `tunnel` | `cloudflared`, runs in the app container's network (`network_mode: service:app`) |
+
+The app image is built from the files in the checkout, so deploying means updating the checkout and then rebuilding `app`. The image does **not** contain `server/migrations/`; migrations are piped into the `db` container with `psql`.
+
+Because `tunnel` shares the app container's network, it must be recreated whenever `app` is recreated.
+
+### Deploying
+
+From the deploy checkout:
+
+```bash
+cd ~/dev/workout-tracker
+scripts/deploy.sh [migration.sql ...]
+```
+
+The script:
+
+1. Checks the checkout is on `main` with no uncommitted changes and that `db` is running.
+2. Backs up the database with `pg_dump` to `backup/backup-pre-deploy-<timestamp>.sql` (git-ignored) and records the `sets` row count.
+3. Fast-forwards to `origin/main` (`git merge --ff-only`).
+4. Applies each listed migration from `server/migrations/` in a single transaction (`psql -1`, stopping on error).
+5. Rebuilds and restarts only `app` (`docker compose up -d --build --no-deps app`), then recreates `tunnel`.
+6. Checks that `http://localhost:7000/` and `/api/users/<id>/exercise-stats` respond, and that the `sets` row count did not change.
+
+List only the migrations added since the last deploy. They are written to be idempotent, so re-running one is harmless.
+
+### Rolling back
+
+```bash
+# Code: go back to the previous commit and rebuild
+git -C ~/dev/workout-tracker log --oneline -5
+git -C ~/dev/workout-tracker reset --hard <previous-commit>
+docker compose up -d --build --no-deps app && docker compose up -d --no-deps --force-recreate tunnel
+
+# Data (only if a migration damaged it): restore the pre-deploy dump
+docker compose exec -T db sh -c 'dropdb -U "$POSTGRES_USER" --force "$POSTGRES_DB" && createdb -U "$POSTGRES_USER" "$POSTGRES_DB"'
+docker compose exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < backup/backup-pre-deploy-<timestamp>.sql
+```
+
+Additive migrations (new nullable columns) don't need a data rollback: the previous app version ignores the extra columns.
+
+
 ## Prerequisites
 
 - **Node.js**: 18 or higher
