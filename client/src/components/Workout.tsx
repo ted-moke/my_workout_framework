@@ -3,6 +3,7 @@ import { FiPlay, FiCheck, FiTrash2 } from "react-icons/fi";
 import {
   fetchSuggestions,
   fetchExerciseStats,
+  createExercise,
   startWorkout,
   finishWorkout,
   abortWorkout,
@@ -113,6 +114,21 @@ export default function Workout() {
     } finally {
       setBusy(false);
     }
+  };
+
+  // Creates an exercise in a body area and shows it at the top of that area's
+  // list, where never-done exercises sort anyway. It has no equipment, so it
+  // stays available at home too.
+  const handleCreateExercise = async (bodyAreaId: number, name: string) => {
+    const created = await createExercise(name, bodyAreaId);
+    const exercise = { ...created, daysSinceLast: null };
+    setSuggestions((prev) =>
+      prev.map((s) =>
+        s.focusArea.bodyArea.id === bodyAreaId
+          ? { ...s, exercises: [exercise, ...s.exercises] }
+          : s
+      )
+    );
   };
 
   const handleAddSet = async (exerciseId: number, pts: number) => {
@@ -274,6 +290,7 @@ export default function Workout() {
               onRemoveSet={handleRemoveSet}
               onUpdateSet={handleUpdateSet}
               onUpdateSetDetails={handleUpdateSetDetails}
+              onCreateExercise={handleCreateExercise}
             />
           ))}
         </div>
