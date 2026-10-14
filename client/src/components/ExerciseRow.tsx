@@ -32,8 +32,9 @@ export default function ExerciseRow({
   onRemoveSet,
   onUpdateSetDetails,
 }: Props) {
-  // Tapping the name expands the row into a detail card; the points buttons
-  // and weight/reps inputs sit outside the toggle and work the same either way.
+  // Tapping the name expands the row into a detail card with the past
+  // weight/reps; the points buttons and weight/reps inputs sit outside the
+  // toggle and work the same either way.
   const [expanded, setExpanded] = useState(false);
   const exerciseSets = sets.filter((s) => s.exercise_id === exercise.id);
 
@@ -90,7 +91,7 @@ export default function ExerciseRow({
           </div>
         )}
       </div>
-      {stats && (
+      {expanded && stats && (
         <div className={styles.exerciseStats}>
           <div className={styles.statLine}>
             <span className={styles.statLabel}>Max</span>
@@ -108,36 +109,32 @@ export default function ExerciseRow({
               <span className={styles.statDate}>{formatShortDay(stats.last.date)}</span>
             </div>
           )}
-          {expanded && (
-            <>
-              <div className={styles.detailHeading}>Best by reps</div>
-              <div className={styles.rangeGrid}>
-                {REP_RANGE_LABELS.map(({ key, label }) => {
-                  const best = stats.rangeMaxes[key];
-                  return (
-                    <div key={key} className={styles.rangeCell}>
-                      <span className={styles.rangeLabel}>{label}</span>
-                      <span className={styles.rangeValue}>
-                        {best ? formatSetDetails(best) : "—"}
-                      </span>
-                      {best && (
-                        <span className={styles.statDate}>{formatShortDay(best.date)}</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className={styles.detailHeading}>Recent sessions</div>
-              {stats.history.map((h, i) => (
-                <div key={i} className={styles.statLine}>
-                  <span className={styles.historyDate}>{formatShortDay(h.date)}</span>
-                  <span className={styles.statValue}>
-                    {h.sets.map(formatSetDetails).join(", ")}
+          <div className={styles.detailHeading}>Best by reps</div>
+          <div className={styles.rangeGrid}>
+            {REP_RANGE_LABELS.map(({ key, label }) => {
+              const best = stats.rangeMaxes[key];
+              return (
+                <div key={key} className={styles.rangeCell}>
+                  <span className={styles.rangeLabel}>{label}</span>
+                  <span className={styles.rangeValue}>
+                    {best ? formatSetDetails(best) : "—"}
                   </span>
+                  {best && (
+                    <span className={styles.statDate}>{formatShortDay(best.date)}</span>
+                  )}
                 </div>
-              ))}
-            </>
-          )}
+              );
+            })}
+          </div>
+          <div className={styles.detailHeading}>Recent sessions</div>
+          {stats.history.map((h, i) => (
+            <div key={i} className={styles.statLine}>
+              <span className={styles.historyDate}>{formatShortDay(h.date)}</span>
+              <span className={styles.statValue}>
+                {h.sets.map(formatSetDetails).join(", ")}
+              </span>
+            </div>
+          ))}
         </div>
       )}
       {expanded && !stats && (
