@@ -75,7 +75,14 @@ export interface ExerciseStats {
   // Most recent workout's sets, or the one before it when that workout holds
   // the max (isPrevious = true).
   last: { date: string; sets: StatSet[]; isPrevious: boolean } | null;
+  // Best set at 1-5, 6-10 and 11+ reps; null when a range has no set with
+  // both weight and reps.
+  rangeMaxes: Record<RepRangeKey, (StatSet & { date: string }) | null>;
+  // Most recent workouts' sets, most recent first.
+  history: { date: string; sets: StatSet[] }[];
 }
+
+export type RepRangeKey = "low" | "mid" | "high";
 
 export interface SetDetails {
   weight?: number | null;

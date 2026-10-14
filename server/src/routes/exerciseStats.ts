@@ -4,7 +4,8 @@ import { computeExerciseStats, type StatSetRow } from "../exerciseStats";
 
 const router = Router();
 
-// GET /api/users/:userId/exercise-stats - Max and last weight/reps per exercise.
+// GET /api/users/:userId/exercise-stats - Max, last, rep-range maxes and recent
+// session history of weight/reps per exercise.
 // Only finished workouts count, so the workout in progress is excluded.
 router.get("/api/users/:userId/exercise-stats", async (req: Request, res: Response) => {
   const userId = parseInt(String(req.params.userId), 10);
