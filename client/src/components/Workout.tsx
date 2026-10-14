@@ -3,6 +3,8 @@ import { FiPlay, FiCheck, FiTrash2 } from "react-icons/fi";
 import {
   fetchSuggestions,
   fetchExerciseStats,
+  fetchExercises,
+  createExercise,
   startWorkout,
   finishWorkout,
   abortWorkout,
@@ -11,7 +13,7 @@ import {
   updateSet,
 } from "../api";
 import { useUser } from "../UserContext";
-import type { ExerciseStats, FocusAreaSuggestion, SetDetails, SetWithDetails, Workout as WorkoutType } from "../types";
+import type { Exercise, ExerciseStats, FocusAreaSuggestion, SetDetails, SetWithDetails, Workout as WorkoutType } from "../types";
 import { areaColorVar, registerAreaColor } from "../areaColor";
 import FocusAreaCard from "./FocusAreaCard";
 import PointCubes from "./PointCubes";
@@ -30,6 +32,9 @@ export default function Workout() {
   const [activeWorkout, setActiveWorkout] = useState<WorkoutType | null>(null);
   const [sets, setSets] = useState<SetWithDetails[]>([]);
   const [exerciseStats, setExerciseStats] = useState<Record<number, ExerciseStats>>({});
+  // Every exercise, including ones the location filter hides from the cards, so
+  // "+ Add exercise" can catch duplicates up front. The server checks too.
+  const [allExercises, setAllExercises] = useState<Exercise[]>([]);
   const [workoutDate, setWorkoutDate] = useState(todayStr());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -59,6 +64,9 @@ export default function Workout() {
     fetchExerciseStats(user.id)
       .then(setExerciseStats)
       .catch(() => setExerciseStats({}));
+    fetchExercises()
+      .then(setAllExercises)
+      .catch(() => setAllExercises([]));
   }, [user]);
 
   useEffect(() => {
@@ -113,6 +121,22 @@ export default function Workout() {
     } finally {
       setBusy(false);
     }
+  };
+
+  // Creates an exercise in a body area and shows it at the top of that area's
+  // list, where never-done exercises sort anyway. It has no equipment, so it
+  // stays available at home too.
+  const handleCreateExercise = async (bodyAreaId: number, name: string) => {
+    const created = await createExercise(name, bodyAreaId);
+    const exercise = { ...created, daysSinceLast: null };
+    setAllExercises((prev) => [...prev, exercise]);
+    setSuggestions((prev) =>
+      prev.map((s) =>
+        s.focusArea.bodyArea.id === bodyAreaId
+          ? { ...s, exercises: [exercise, ...s.exercises] }
+          : s
+      )
+    );
   };
 
   const handleAddSet = async (exerciseId: number, pts: number) => {
@@ -274,6 +298,10 @@ export default function Workout() {
               onRemoveSet={handleRemoveSet}
               onUpdateSet={handleUpdateSet}
               onUpdateSetDetails={handleUpdateSetDetails}
+              areaExercises={allExercises.filter(
+                (e) => e.body_area_id === s.focusArea.bodyArea.id
+              )}
+              onCreateExercise={handleCreateExercise}
             />
           ))}
         </div>

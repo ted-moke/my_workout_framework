@@ -17,10 +17,23 @@ import type {
 
 const BASE = "/api";
 
+// Carries the HTTP status, so callers can tell e.g. a 409 conflict apart.
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+  }
+}
+
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(body || res.statusText);
+    let message = body || res.statusText;
+    try {
+      message = JSON.parse(body).error || message;
+    } catch {
+      // Not JSON; use the raw body.
+    }
+    throw new ApiError(message, res.status);
   }
   return res.json();
 }

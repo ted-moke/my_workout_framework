@@ -7,6 +7,7 @@ import type {
   CreatePlanBody,
   DbFocusArea,
 } from "../types";
+import { findDuplicateExercise } from "../exerciseNames";
 
 const router = Router();
 
@@ -341,6 +342,20 @@ router.post("/api/exercises", async (req: Request, res: Response) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    // Every exercise in the area counts, including ones hidden by equipment.
+    const sameArea = await client.query<{ id: number; name: string }>(
+      "SELECT id, name FROM exercises WHERE body_area_id = $1",
+      [bodyAreaId]
+    );
+    const duplicate = findDuplicateExercise(sameArea.rows, name);
+    if (duplicate) {
+      await client.query("ROLLBACK");
+      res.status(409).json({
+        error: "An exercise with that name already exists in this body area",
+        exercise: duplicate,
+      });
+      return;
+    }
     const result = await client.query<DbExercise>(
       "INSERT INTO exercises (name, body_area_id) VALUES ($1, $2) RETURNING id",
       [name.trim(), bodyAreaId]
