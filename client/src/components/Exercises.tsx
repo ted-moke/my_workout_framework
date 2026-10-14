@@ -15,6 +15,7 @@ import {
   deleteEquipment,
   fetchUserEquipment,
   setUserEquipment,
+  ApiError,
 } from "../api";
 import { useUser } from "../UserContext";
 import type { BodyArea, Equipment, Exercise } from "../types";
@@ -32,6 +33,7 @@ export default function Exercises() {
   const [editName, setEditName] = useState("");
   const [editBodyAreaId, setEditBodyAreaId] = useState(0);
   const [editEquipmentIds, setEditEquipmentIds] = useState<number[]>([]);
+  const [editError, setEditError] = useState("");
   const [busy, setBusy] = useState(false);
 
   // Body area editing state
@@ -77,6 +79,7 @@ export default function Exercises() {
     setEditName("");
     setEditBodyAreaId(0);
     setEditEquipmentIds([]);
+    setEditError("");
   };
 
   const toggleEditEquipment = (id: number) => {
@@ -89,7 +92,7 @@ export default function Exercises() {
     if (!editName.trim() || editBodyAreaId === 0) return;
 
     setBusy(true);
-    setError("");
+    setEditError("");
     try {
       if (editing === "new") {
         await createExercise(editName.trim(), editBodyAreaId, editEquipmentIds);
@@ -99,8 +102,11 @@ export default function Exercises() {
       const updated = await fetchExercises();
       setExercises(updated);
       cancelEdit();
-    } catch {
-      setError("Failed to save exercise");
+    } catch (err) {
+      // Shown in the editor, so a duplicate name can be fixed without retyping.
+      setEditError(
+        err instanceof ApiError && err.status === 409 ? err.message : "Failed to save exercise"
+      );
     } finally {
       setBusy(false);
     }
@@ -326,6 +332,7 @@ export default function Exercises() {
                 : "Only shown at home if you own all of these."}
             </p>
           </div>
+          {editError && <p className="error">{editError}</p>}
           <div className={styles.editorActions}>
             <button
               className="btn-primary"

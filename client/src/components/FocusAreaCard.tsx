@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
-import type { ExerciseStats, FocusAreaSuggestion, SetDetails, SetWithDetails } from "../types";
+import type { Exercise, ExerciseStats, FocusAreaSuggestion, SetDetails, SetWithDetails } from "../types";
 import ExerciseRow from "./ExerciseRow";
 import AddExerciseControl from "./AddExerciseControl";
 import PointCubes from "./PointCubes";
@@ -17,6 +17,8 @@ interface Props {
   onRemoveSet: (setId: number) => void;
   onUpdateSet: (setId: number, pts: number) => void;
   onUpdateSetDetails: (setId: number, changes: SetDetails) => void;
+  // All exercises in this body area, including ones hidden at this location.
+  areaExercises: Exercise[];
   onCreateExercise: (bodyAreaId: number, name: string) => Promise<void>;
 }
 
@@ -30,6 +32,7 @@ export default function FocusAreaCard({
   onRemoveSet,
   onUpdateSet,
   onUpdateSetDetails,
+  areaExercises,
   onCreateExercise,
 }: Props) {
   const [open, setOpen] = useState(defaultOpen);
@@ -147,7 +150,10 @@ export default function FocusAreaCard({
             />
           ))}
           <AddExerciseControl
-            existingNames={regularExercises.map((e) => e.name)}
+            existing={areaExercises.map((e) => ({
+              name: e.name,
+              hidden: !suggestion.exercises.some((s) => s.id === e.id),
+            }))}
             onCreate={(name) => onCreateExercise(focusArea.bodyArea.id, name)}
           />
         </div>

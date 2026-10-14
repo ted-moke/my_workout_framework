@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { FiPlus } from "react-icons/fi";
+import { ApiError } from "../api";
 import styles from "./AddExerciseControl.module.css";
 
 interface Props {
-  // Names already in the list, to catch duplicates before creating one.
-  existingNames: string[];
+  // Exercises already in this body area, to catch duplicates before creating
+  // one. `hidden` marks those the location filter keeps out of the list.
+  existing: { name: string; hidden: boolean }[];
   onCreate: (name: string) => Promise<void>;
 }
 
 // "+ Add exercise" at the bottom of a focus area: creates a new exercise in
 // that area on the spot, e.g. to log something unplanned mid-workout.
-export default function AddExerciseControl({ existingNames, onCreate }: Props) {
+export default function AddExerciseControl({ existing, onCreate }: Props) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -26,8 +28,9 @@ export default function AddExerciseControl({ existingNames, onCreate }: Props) {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) return;
-    if (existingNames.some((n) => n.toLowerCase() === trimmed.toLowerCase())) {
-      setError("Already in this list");
+    const match = existing.find((e) => e.name.trim().toLowerCase() === trimmed.toLowerCase());
+    if (match) {
+      setError(match.hidden ? "Already exists (hidden at this location)" : "Already in this list");
       return;
     }
     setSaving(true);
@@ -35,8 +38,11 @@ export default function AddExerciseControl({ existingNames, onCreate }: Props) {
     try {
       await onCreate(trimmed);
       close();
-    } catch {
-      setError("Failed to add exercise");
+    } catch (err) {
+      // The server has the final say on duplicates, e.g. one added elsewhere.
+      setError(
+        err instanceof ApiError && err.status === 409 ? err.message : "Failed to add exercise"
+      );
     } finally {
       setSaving(false);
     }
