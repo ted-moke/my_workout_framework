@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computeExerciseStats, type StatSetRow } from "./exerciseStats";
+import { computeExerciseStats, HISTORY_LIMIT, type StatSetRow } from "./exerciseStats";
 
 let nextId = 1;
 function row(
@@ -106,4 +106,91 @@ test("exercises are computed independently", () => {
   ]);
   assert.equal(stats.get(7)!.max.weight, 50);
   assert.equal(stats.get(9)!.max.weight, 200);
+});
+
+test("rep-range maxes keep a heavy low-rep set visible", () => {
+  const stats = computeExerciseStats([
+    row(3, "2026-10-08", 100, 20),
+    row(2, "2026-10-05", 150, 3),
+    row(1, "2026-10-01", 120, 8),
+  ]).get(1)!;
+  assert.deepEqual(stats.rangeMaxes, {
+    low: { weight: 150, reps: 3, date: "2026-10-05" },
+    mid: { weight: 120, reps: 8, date: "2026-10-01" },
+    high: { weight: 100, reps: 20, date: "2026-10-08" },
+  });
+});
+
+test("rep-range boundaries are 1-5, 6-10 and 11+", () => {
+  const stats = computeExerciseStats([
+    row(1, "2026-10-01", 50, 5),
+    row(1, "2026-10-01", 40, 6),
+    row(1, "2026-10-01", 30, 10),
+    row(1, "2026-10-01", 20, 11),
+  ]).get(1)!;
+  assert.equal(stats.rangeMaxes.low?.reps, 5);
+  assert.deepEqual(stats.rangeMaxes.mid, { weight: 40, reps: 6, date: "2026-10-01" });
+  assert.equal(stats.rangeMaxes.high?.reps, 11);
+});
+
+test("rep-range ties go to most reps, then the most recent set", () => {
+  const stats = computeExerciseStats([
+    row(3, "2026-10-08", 135, 7),
+    row(2, "2026-10-05", 135, 9),
+    row(1, "2026-10-01", 135, 9),
+  ]).get(1)!;
+  assert.deepEqual(stats.rangeMaxes.mid, { weight: 135, reps: 9, date: "2026-10-05" });
+});
+
+test("rep ranges without a set with both weight and reps are null", () => {
+  const stats = computeExerciseStats([
+    row(3, "2026-10-08", 200, null),
+    row(2, "2026-10-05", null, 3),
+    row(1, "2026-10-01", 50, 0),
+    row(1, "2026-10-01", 60, 12),
+  ]).get(1)!;
+  assert.deepEqual(stats.rangeMaxes, {
+    low: null,
+    mid: null,
+    high: { weight: 60, reps: 12, date: "2026-10-01" },
+  });
+});
+
+test("history lists recorded sets per workout, most recent first", () => {
+  const stats = computeExerciseStats([
+    row(3, "2026-10-08", 140, 5),
+    row(3, "2026-10-08", null, null), // ignored: nothing recorded
+    row(3, "2026-10-08", 120, 10),
+    row(2, "2026-10-05", null, null), // workout with nothing recorded
+    row(1, "2026-10-01", 130, 8),
+  ]).get(1)!;
+  assert.deepEqual(stats.history, [
+    {
+      date: "2026-10-08",
+      sets: [
+        { weight: 140, reps: 5 },
+        { weight: 120, reps: 10 },
+      ],
+    },
+    { date: "2026-10-01", sets: [{ weight: 130, reps: 8 }] },
+  ]);
+});
+
+test("history keeps two workouts on the same date apart", () => {
+  const stats = computeExerciseStats([
+    row(2, "2026-10-05", 100, 5),
+    row(1, "2026-10-05", 90, 5),
+  ]).get(1)!;
+  assert.equal(stats.history.length, 2);
+});
+
+test("history is capped at the most recent HISTORY_LIMIT workouts", () => {
+  const rows: StatSetRow[] = [];
+  for (let w = HISTORY_LIMIT + 3; w >= 1; w--) {
+    rows.push(row(w, `2026-09-${String(w).padStart(2, "0")}`, 100 + w, 5));
+  }
+  const history = computeExerciseStats(rows).get(1)!.history;
+  assert.equal(history.length, HISTORY_LIMIT);
+  assert.equal(history[0].date, `2026-09-${HISTORY_LIMIT + 3}`);
+  assert.equal(history[HISTORY_LIMIT - 1].date, "2026-09-04");
 });
