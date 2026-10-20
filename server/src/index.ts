@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import router from "./routes";
+import pool from "./db";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -29,9 +30,20 @@ if (isProduction) {
   });
 }
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   if (isProduction) {
     console.log("Serving frontend from client/dist");
   }
 });
+
+// Cloud Run sends SIGTERM before stopping an instance; docker compose does too.
+function shutdown(signal: string) {
+  console.log(`${signal} received, shutting down`);
+  server.close(() => {
+    pool.end().finally(() => process.exit(0));
+  });
+  setTimeout(() => process.exit(0), 8000).unref();
+}
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

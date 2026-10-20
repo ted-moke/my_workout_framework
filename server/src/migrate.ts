@@ -3,25 +3,36 @@ import fs from "fs";
 import path from "path";
 import pool from "./db";
 
-async function migrate(file: string) {
-  const sql = fs.readFileSync(path.resolve(__dirname, "../migrations", file), "utf8");
+// Applies migrations from server/migrations/ in the order given, each in its
+// own transaction. Uses the same DB settings as the app (DATABASE_URL or DB_*).
+async function migrate(files: string[]) {
   const client = await pool.connect();
   try {
-    await client.query(sql);
-    console.log(`Migration applied: ${file}`);
+    for (const file of files) {
+      const sql = fs.readFileSync(path.resolve(__dirname, "../migrations", file), "utf8");
+      await client.query("BEGIN");
+      try {
+        await client.query(sql);
+        await client.query("COMMIT");
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw new Error(`${file}: ${(err as Error).message}`);
+      }
+      console.log(`Migration applied: ${file}`);
+    }
   } finally {
     client.release();
     await pool.end();
   }
 }
 
-const file = process.argv[2];
-if (!file) {
-  console.error("Usage: tsx src/migrate.ts <migration-file.sql>");
+const files = process.argv.slice(2);
+if (files.length === 0) {
+  console.error("Usage: tsx src/migrate.ts <migration-file.sql> [...]");
   process.exit(1);
 }
 
-migrate(file).catch((err) => {
-  console.error("Migration failed:", err);
+migrate(files).catch((err) => {
+  console.error("Migration failed:", err.message ?? err);
   process.exit(1);
 });
