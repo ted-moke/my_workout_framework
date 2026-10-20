@@ -1,0 +1,10 @@
+# Keep the build context small and free of data/secrets.
+.git
+.herdr-project
+**/node_modules
+**/dist
+backup
+pgadmin
+.env
+.env.*
+*.log

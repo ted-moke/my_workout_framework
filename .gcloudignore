@@ -1,0 +1,15 @@
+# Files NOT uploaded by `gcloud run deploy --source .` (Cloud Build context).
+# Without this file gcloud would fall back to .gitignore and upload the
+# git-tracked database dumps in backup/.
+.gcloudignore
+.git
+.gitignore
+.herdr-project
+**/node_modules
+**/dist
+backup/
+pgadmin/
+.env
+.env.*
+*.log
+deploy/
